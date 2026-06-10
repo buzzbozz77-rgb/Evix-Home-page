@@ -1,755 +1,1136 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
-const styles = `
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+const BUILD_TYPES = [
+  { id: "website", label: "Website", icon: "⬡", desc: "Full multi-section site" },
+  { id: "landing", label: "Landing Page", icon: "◈", desc: "High-converting funnel" },
+  { id: "chatbot", label: "AI Chatbot", icon: "◎", desc: "Intelligent chat widget" },
+];
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+const STYLE_PRESETS = {
+  Luxury: "dark rich background, gold or platinum accents, elegant serif fonts, sophisticated spacing, premium feel",
+  Minimal: "ultra-clean white space, monochrome palette, thin typography, no clutter, zen aesthetic",
+  Modern: "glassmorphism, vibrant gradients, bold typography, dynamic animations, cutting-edge UI",
+  Bold: "high contrast, strong colors, oversized headlines, energetic layout, powerful visual impact",
+};
 
-:root {
-  --bg: #050816;
-  --blue: #3b82f6;
-  --purple: #a855f7;
-  --pink: #ec4899;
-  --blue-dim: rgba(59,130,246,0.15);
-  --purple-dim: rgba(168,85,247,0.15);
-  --pink-dim: rgba(236,72,153,0.12);
-  --glass: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.08);
-  --text: #e2e8f0;
-  --muted: rgba(226,232,240,0.45);
-}
-
-html { scroll-behavior: smooth; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-  overflow-x: hidden;
-  line-height: 1.6;
-}
-
-.orbitron { font-family: 'Orbitron', monospace; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 4px; }
-
-/* ─── Glow Utilities ─── */
-.glow-blue  { text-shadow: 0 0 20px rgba(59,130,246,0.8), 0 0 40px rgba(59,130,246,0.4); }
-.glow-purple{ text-shadow: 0 0 20px rgba(168,85,247,0.8), 0 0 40px rgba(168,85,247,0.4); }
-.glow-pink  { text-shadow: 0 0 20px rgba(236,72,153,0.8), 0 0 40px rgba(236,72,153,0.4); }
-
-.box-glow-blue   { box-shadow: 0 0 30px rgba(59,130,246,0.3), 0 0 60px rgba(59,130,246,0.1); }
-.box-glow-purple { box-shadow: 0 0 30px rgba(168,85,247,0.3), 0 0 60px rgba(168,85,247,0.1); }
-.box-glow-pink   { box-shadow: 0 0 30px rgba(236,72,153,0.3), 0 0 60px rgba(236,72,153,0.1); }
-
-/* ─── Gradient Text ─── */
-.grad-text {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 50%, var(--pink) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.grad-text-bp {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ─── Buttons ─── */
-.btn-primary {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 14px 36px; border-radius: 10px; font-size: 15px; font-weight: 600;
-  background: linear-gradient(135deg, var(--blue), var(--purple));
-  color: #fff; border: none; cursor: pointer; position: relative;
-  overflow: hidden; transition: all 0.3s ease; letter-spacing: 0.04em;
-  box-shadow: 0 0 20px rgba(59,130,246,0.4), 0 0 40px rgba(168,85,247,0.2);
-}
-.btn-primary::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-  opacity: 0; transition: opacity 0.3s;
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(59,130,246,0.6), 0 0 60px rgba(168,85,247,0.3); }
-.btn-primary:hover::before { opacity: 1; }
-
-.btn-ghost {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 13px 36px; border-radius: 10px; font-size: 15px; font-weight: 600;
-  background: transparent; color: var(--blue); cursor: pointer;
-  border: 1px solid rgba(59,130,246,0.5); transition: all 0.3s ease;
-  letter-spacing: 0.04em; position: relative; overflow: hidden;
-}
-.btn-ghost::before {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1));
-  opacity: 0; transition: opacity 0.3s;
-}
-.btn-ghost:hover { border-color: var(--purple); color: var(--purple); transform: translateY(-2px); }
-.btn-ghost:hover::before { opacity: 1; }
-
-/* ─── Glass Card ─── */
-.glass-card {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 20px;
-  transition: all 0.4s ease;
-  position: relative;
-  overflow: hidden;
-}
-.glass-card::before {
-  content: ''; position: absolute; inset: 0; border-radius: 20px;
-  background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(168,85,247,0.05));
-  opacity: 0; transition: opacity 0.4s;
-}
-.glass-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-6px); }
-.glass-card:hover::before { opacity: 1; }
-.glass-card:hover .card-glow-inner { opacity: 1; }
-
-.card-glow-inner {
-  position: absolute; width: 200px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 70%);
-  top: -60px; right: -60px; opacity: 0; transition: opacity 0.4s;
-  pointer-events: none;
-}
-
-/* ─── Nav ─── */
-.nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-  transition: all 0.3s ease;
-}
-.nav.scrolled {
-  background: rgba(5,8,22,0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(59,130,246,0.15);
-}
-
-/* ─── Hero BG ─── */
-.hero-bg {
-  position: absolute; inset: 0; overflow: hidden; z-index: 0;
-}
-.orb {
-  position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none;
-}
-.orb-1 {
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%);
-  top: -200px; left: -100px;
-  animation: float1 8s ease-in-out infinite;
-}
-.orb-2 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
-  top: 100px; right: -150px;
-  animation: float2 10s ease-in-out infinite;
-}
-.orb-3 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, rgba(236,72,153,0.1) 0%, transparent 70%);
-  bottom: 0; left: 30%;
-  animation: float3 12s ease-in-out infinite;
-}
-
-@keyframes float1 {
-  0%,100% { transform: translate(0,0); }
-  50% { transform: translate(30px, 40px); }
-}
-@keyframes float2 {
-  0%,100% { transform: translate(0,0); }
-  50% { transform: translate(-40px, 20px); }
-}
-@keyframes float3 {
-  0%,100% { transform: translate(0,0); }
-  50% { transform: translate(20px, -30px); }
-}
-
-/* ─── Grid BG ─── */
-.grid-bg {
-  position: absolute; inset: 0; z-index: 0;
-  background-image:
-    linear-gradient(rgba(59,130,246,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
-}
-
-/* ─── Animations ─── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(32px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulse-ring {
-  0% { transform: scale(1); opacity: 0.6; }
-  100% { transform: scale(2.5); opacity: 0; }
-}
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-@keyframes blink {
-  0%,100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.fade-up { animation: fadeUp 0.9s ease forwards; opacity: 0; }
-.d1 { animation-delay: 0.1s; }
-.d2 { animation-delay: 0.25s; }
-.d3 { animation-delay: 0.4s; }
-.d4 { animation-delay: 0.55s; }
-.d5 { animation-delay: 0.7s; }
-
-/* ─── Badge ─── */
-.badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 18px; border-radius: 40px;
-  background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);
-  font-size: 12px; letter-spacing: 0.12em; color: var(--blue); text-transform: uppercase;
-}
-.pulse-dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--blue);
-  position: relative; flex-shrink: 0;
-}
-.pulse-dot::after {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: var(--blue); animation: pulse-ring 2s ease-out infinite;
-}
-
-/* ─── Section divider ─── */
-.divider {
-  width: 80px; height: 2px; margin: 0 auto;
-  background: linear-gradient(to right, transparent, var(--purple), transparent);
-}
-
-/* ─── Step connector ─── */
-.step-num {
-  width: 64px; height: 64px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim));
-  border: 1px solid rgba(168,85,247,0.4);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 700;
-  color: var(--purple); margin: 0 auto 24px;
-  box-shadow: 0 0 20px rgba(168,85,247,0.2);
-}
-
-/* ─── Form ─── */
-.form-input {
-  width: 100%; padding: 14px 18px; border-radius: 10px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-  color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 15px;
-  outline: none; transition: all 0.3s ease;
-}
-.form-input:focus {
-  border-color: var(--blue); background: rgba(59,130,246,0.06);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-}
-.form-input::placeholder { color: rgba(226,232,240,0.3); }
-textarea.form-input { resize: vertical; min-height: 130px; }
-
-/* ─── Portfolio card ─── */
-.portfolio-card {
-  border-radius: 20px; overflow: hidden; position: relative;
-  background: var(--glass); border: 1px solid var(--glass-border);
-  transition: all 0.4s ease;
-}
-.portfolio-card:hover { transform: translateY(-6px); border-color: rgba(236,72,153,0.4); }
-.portfolio-card:hover .portfolio-overlay { opacity: 1; }
-.portfolio-thumb {
-  width: 100%; height: 200px; display: flex; align-items: center; justify-content: center;
-  font-size: 60px; position: relative; overflow: hidden;
-}
-.portfolio-overlay {
-  position: absolute; inset: 0; background: rgba(5,8,22,0.7);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; transition: opacity 0.4s; backdrop-filter: blur(4px);
-}
-
-/* ─── Testimonial ─── */
-.testimonial-card {
-  background: var(--glass); border: 1px solid var(--glass-border);
-  border-radius: 20px; padding: 36px 32px; transition: all 0.4s ease;
-  position: relative;
-}
-.testimonial-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-4px); }
-.quote-mark {
-  font-size: 80px; line-height: 1; color: rgba(168,85,247,0.2);
-  font-family: 'Orbitron', monospace; position: absolute; top: 16px; left: 24px;
-}
-
-/* ─── CTA section ─── */
-.cta-section {
-  position: relative; overflow: hidden; text-align: center;
-}
-.cta-bg {
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(168,85,247,0.08) 50%, rgba(236,72,153,0.06) 100%);
-}
-.cta-border {
-  border-top: 1px solid rgba(168,85,247,0.2);
-  border-bottom: 1px solid rgba(59,130,246,0.2);
-}
-
-/* ─── Footer ─── */
-.footer-line { border-top: 1px solid rgba(255,255,255,0.06); }
-
-/* ─── Icon circles ─── */
-.icon-wrap {
-  width: 64px; height: 64px; border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; margin-bottom: 24px;
-}
-
-/* ─── Nav links ─── */
-.nav-link {
-  color: rgba(226,232,240,0.55); font-size: 14px; cursor: pointer;
-  transition: color 0.3s; letter-spacing: 0.04em;
-}
-.nav-link:hover { color: var(--blue); }
-
-/* ─── Stars ─── */
-.stars { color: var(--pink); font-size: 14px; letter-spacing: 3px; margin-bottom: 16px; }
-`;
-
-/* ─────────────────────────── DATA ─────────────────────────── */
-const services = [
+const SMART_QUESTIONS = [
   {
-    icon: "🌐",
-    color: "#3b82f6",
-    dimColor: "rgba(59,130,246,0.12)",
-    borderColor: "rgba(59,130,246,0.3)",
-    tag: "Most Popular",
-    title: "Business Websites",
-    points: ["Full business & brand websites", "Fast, modern & fully responsive", "Built for conversions & SEO"],
-    desc: "We design and build complete digital presences that leave lasting impressions and turn visitors into customers.",
+    id: "style",
+    question: "Choose your style",
+    subtext: "Pick a visual direction",
+    options: [
+      { id: "Luxury", label: "Luxury", icon: "◆", desc: "Elegant & premium" },
+      { id: "Minimal", label: "Minimal", icon: "○", desc: "Clean & focused" },
+      { id: "Modern", label: "Modern", icon: "◈", desc: "Bold & dynamic" },
+      { id: "Bold", label: "Bold", icon: "⬡", desc: "Strong & impactful" },
+    ],
   },
   {
-    icon: "🚀",
-    color: "#a855f7",
-    dimColor: "rgba(168,85,247,0.12)",
-    borderColor: "rgba(168,85,247,0.3)",
-    tag: "High Impact",
-    title: "Landing Pages",
-    points: ["High-converting sales pages", "Product funnels & campaigns", "A/B tested layouts"],
-    desc: "Precision-engineered pages with one job: convert your traffic into leads, sales, and loyal customers.",
+    id: "audience",
+    question: "Who is your target audience?",
+    subtext: "Target audience",
+    options: [
+      { id: "Business professionals", label: "Business", icon: "◇", desc: "B2B & corporate" },
+      { id: "Luxury clients", label: "Luxury clients", icon: "◆", desc: "High-end market" },
+      { id: "General public", label: "General", icon: "◎", desc: "Mass market" },
+      { id: "Young creatives", label: "Creatives", icon: "⊹", desc: "Teens & designers" },
+    ],
   },
   {
-    icon: "🤖",
-    color: "#ec4899",
-    dimColor: "rgba(236,72,153,0.12)",
-    borderColor: "rgba(236,72,153,0.3)",
-    tag: "24/7 Active",
-    title: "AI Chatbots",
-    points: ["Automate customer replies", "Capture & qualify leads", "24/7 support, zero cost"],
-    desc: "Deploy intelligent AI agents that engage visitors, answer questions, and close deals while you sleep.",
+    id: "goal",
+    question: "What is your primary goal?",
+    subtext: "Primary goal",
+    options: [
+      { id: "Generate leads", label: "Lead gen", icon: "◈", desc: "Collect contacts" },
+      { id: "Drive sales", label: "Sales", icon: "◇", desc: "Convert buyers" },
+      { id: "Showcase portfolio", label: "Showcase", icon: "⬡", desc: "Display work" },
+      { id: "Build brand awareness", label: "Brand", icon: "○", desc: "Grow presence" },
+    ],
   },
 ];
 
-const portfolio = [
+const EXAMPLES = {
+  website: [
+    "A luxury real estate agency with hero, listings, and contact form",
+    "A modern restaurant site with menu, gallery, and reservations",
+    "A fitness studio with classes, trainers, and membership plans",
+    "A law firm homepage with practice areas and team profiles",
+  ],
+  landing: [
+    "A SaaS dashboard tool with pricing and testimonials",
+    "A beauty salon booking page with services and pricing",
+    "A fitness app landing page with before/after and pricing tiers",
+    "A startup product launch page with waitlist signup",
+  ],
+  chatbot: [
+    "A customer support chatbot for an e-commerce clothing store",
+    "A booking assistant chatbot for a luxury hotel",
+    "A lead generation chatbot for a real estate agency",
+    "A tech support bot for a SaaS productivity app",
+  ],
+};
+
+const SHOWCASE = [
+  { label: "Real Estate", color: "#22c55e" },
+  { label: "SaaS", color: "#16a34a" },
+  { label: "Restaurant", color: "#4ade80" },
+  { label: "E-commerce", color: "#22c55e" },
+  { label: "Portfolio", color: "#16a34a" },
+  { label: "Healthcare", color: "#4ade80" },
+  { label: "Fitness", color: "#22c55e" },
+  { label: "Education", color: "#16a34a" },
+];
+
+const PRICING = [
   {
-    emoji: "💎",
-    bg: "linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%)",
-    accent: "#3b82f6",
-    title: "LuxeStore — E-Commerce",
-    desc: "Full brand website + product catalog for a luxury fashion retailer. 40% increase in online sales.",
-    tag: "Website",
+    name: "Free", price: "$0", period: "forever",
+    desc: "Get started with 3 free builds",
+    features: ["3 website generations","Website & Landing Page builder","HTML download","Basic support"],
+    cta: "Start Free", highlight: false,
   },
   {
-    emoji: "⚡",
-    bg: "linear-gradient(135deg, #2d1b4e 0%, #0d0a1e 100%)",
-    accent: "#a855f7",
-    title: "SprintFunnel — SaaS Launch",
-    desc: "High-converting landing page for a productivity SaaS. Achieved 28% trial signup rate.",
-    tag: "Landing Page",
+    name: "Pro", price: "$19", period: "/month",
+    desc: "For creators & freelancers",
+    features: ["Unlimited generations","All build types (Website, Landing, Chatbot)","Priority generation speed","Advanced AI prompts","HTML + Code editor","Priority support"],
+    cta: "Get Pro", highlight: true,
   },
   {
-    emoji: "🏥",
-    bg: "linear-gradient(135deg, #1a2f1a 0%, #0a140a 100%)",
-    accent: "#ec4899",
-    title: "MediCare — Clinic AI Bot",
-    desc: "AI chatbot for a private clinic that books appointments, answers FAQs, and follows up with patients.",
-    tag: "AI Chatbot",
+    name: "Agency", price: "$49", period: "/month",
+    desc: "For teams & agencies",
+    features: ["Everything in Pro","Team workspace (5 seats)","White-label exports","Custom AI instructions","API access","Dedicated support"],
+    cta: "Get Agency", highlight: false,
   },
 ];
 
-const steps = [
-  { num: "01", title: "Tell Us Your Idea", desc: "Share your business goals, brand, and what you need. We listen carefully and plan the perfect solution for you." },
-  { num: "02", title: "We Build Your System", desc: "Our team designs and develops your website, funnel, or AI bot — fast, clean, and built to convert." },
-  { num: "03", title: "You Get Results", desc: "Launch with confidence. Watch traffic turn into leads, customers, and revenue on autopilot." },
+const NAV_SERVICES = [
+  { label: "Website", desc: "Full multi-section sites", icon: "⬡", href: "/services", color: "#22c55e", badge: "Most Popular", price: "From $199" },
+  { label: "Landing Pages", desc: "High-converting funnels", icon: "◈", href: "/services", color: "#16a34a", badge: null, price: "From $99" },
+  { label: "AI Chatbots", desc: "Intelligent chat widgets", icon: "◎", href: "/services", color: "#4ade80", badge: null, price: "From $59/mo" },
 ];
 
-const testimonials = [
-  {
-    name: "Khaled Al-Mansouri",
-    role: "CEO, Al-Mansouri Real Estate",
-    avatar: "K",
-    color: "#3b82f6",
-    quote: "NOVIX built us a website that completely transformed how clients perceive us. Professional, fast, and beautiful. Our inquiry rate went up by 60% in the first month.",
-    service: "Business Website",
-  },
-  {
-    name: "Lina Haddad",
-    role: "Founder, Bloom Beauty Store",
-    avatar: "L",
-    color: "#a855f7",
-    quote: "The landing page they created for our product launch was insane. 300 orders in the first week. I never knew a page could make that much difference.",
-    service: "Landing Page",
-  },
-  {
-    name: "Dr. Rami Nassar",
-    role: "Director, NovaCare Clinic",
-    avatar: "R",
-    color: "#ec4899",
-    quote: "The AI chatbot handles 90% of our appointment bookings now. Patients get instant answers at 3am, and my staff focuses on real work. Game changer.",
-    service: "AI Chatbot",
-  },
+const QUICK_START_TYPES = [
+  { id: "clinic", label: "Clinic", desc: "Professional healthcare website with booking" },
+  { id: "barber", label: "Barber", desc: "Modern barbershop website" },
+  { id: "gym", label: "Gym", desc: "Fitness website with scheduling" },
+  { id: "restaurant", label: "Restaurant", desc: "Restaurant website with ordering" },
+  { id: "ecommerce", label: "Store", desc: "E-commerce store with payments" },
 ];
 
-/* ─────────────────────────── COMPONENT ─────────────────────────── */
-export default function Home() {
-  const [scrolled, setScrolled] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
+// ── CAREERS MODAL ─────────────────────────────────────────────────────────────
+const CAREER_POSITIONS = [
+  { id: "frontend", label: "Frontend Engineer", dept: "Engineering", type: "Full-time · Remote" },
+  { id: "ai", label: "AI/ML Engineer", dept: "Engineering", type: "Full-time · Remote" },
+  { id: "design", label: "Product Designer", dept: "Design", type: "Full-time · Remote" },
+  { id: "growth", label: "Growth Marketer", dept: "Marketing", type: "Full-time · Remote" },
+  { id: "support", label: "Customer Success", dept: "Operations", type: "Full-time · Remote" },
+];
+
+function CareersModal({ onClose }) {
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "", linkedin: "", portfolio: "", why: "", cv: null });
+  const [submitted, setSubmitted] = useState(false);
+  const [cvName, setCvName] = useState("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(p => ({ ...p, cv: file }));
+      setCvName(file.name);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.why.trim() || !formData.cv) return;
+    setSubmitted(true);
+  };
+
+  const isFormValid = formData.name.trim() && formData.email.trim() && formData.why.trim() && formData.cv;
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 700, background: "rgba(0,0,0,.85)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", animation: "fadeIn .2s ease" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: "#000000", border: "1px solid rgba(34,197,94,.25)", borderRadius: 20, width: "100%", maxWidth: 580, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 100px rgba(0,0,0,.9)", animation: "modalIn .25s ease" }}>
+        {/* Header */}
+        <div style={{ padding: "28px 28px 20px", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f1f4ff", letterSpacing: "-.025em", marginBottom: 6 }}>Join the Evix Team</h2>
+            <p style={{ fontSize: 13.5, color: "rgba(226,232,248,.4)", lineHeight: 1.6 }}>We're building the future of AI web creation. Come build it with us.</p>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 8, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "rgba(226,232,248,.5)", fontSize: 18, flexShrink: 0 }}>×</button>
+        </div>
+
+        {submitted ? (
+          <div style={{ padding: "48px 28px", textAlign: "center" }}>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: "#f1f4ff", marginBottom: 8, letterSpacing: "-.025em" }}>Application Sent!</h3>
+            <p style={{ fontSize: 14, color: "rgba(226,232,248,.4)", lineHeight: 1.7, maxWidth: 360, margin: "0 auto 24px" }}>
+              Thanks for applying to Evix! We'll review your application and get back to you within 5 business days.
+            </p>
+            <button onClick={onClose} style={{ padding: "11px 28px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Close</button>
+          </div>
+        ) : !selectedPosition ? (
+          /* Position List */
+          <div style={{ padding: "20px 28px 28px" }}>
+            <p style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(226,232,248,.25)", marginBottom: 16 }}>Open Positions</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {CAREER_POSITIONS.map(pos => (
+                <div key={pos.id}
+                  onClick={() => setSelectedPosition(pos)}
+                  style={{ padding: "16px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,.07)", background: "rgba(255,255,255,.025)", cursor: "pointer", transition: "all .18s", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(34,197,94,.4)"; e.currentTarget.style.background = "rgba(34,197,94,.07)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,.07)"; e.currentTarget.style.background = "rgba(255,255,255,.025)"; }}
+                >
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: "#f1f4ff", marginBottom: 4 }}>{pos.label}</p>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "#4ade80", background: "rgba(34,197,94,.12)", border: "1px solid rgba(34,197,94,.2)", borderRadius: 100, padding: "2px 8px" }}>{pos.dept}</span>
+                      <span style={{ fontSize: 11, color: "rgba(226,232,248,.35)" }}>{pos.type}</span>
+                    </div>
+                  </div>
+                  <span style={{ color: "rgba(34,197,94,.6)", fontSize: 18 }}>→</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 20, padding: "14px 16px", borderRadius: 10, background: "rgba(74,222,128,.06)", border: "1px solid rgba(74,222,128,.15)" }}>
+              <p style={{ fontSize: 12.5, color: "rgba(74,222,128,.6)", lineHeight: 1.6 }}>
+                Don't see your role? Send a general application and tell us how you can contribute to Evix.
+              </p>
+              <button
+                onClick={() => setSelectedPosition({ id: "general", label: "General Application", dept: "Any", type: "Full-time · Remote" })}
+                style={{ marginTop: 10, padding: "7px 14px", borderRadius: 7, border: "1px solid rgba(74,222,128,.3)", background: "rgba(74,222,128,.1)", color: "#4ade80", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "Inter,sans-serif" }}
+              >Apply Anyway →</button>
+            </div>
+          </div>
+        ) : (
+          /* Application Form */
+          <div style={{ padding: "20px 28px 28px" }}>
+            <button onClick={() => setSelectedPosition(null)} style={{ background: "transparent", border: "none", color: "rgba(226,232,248,.4)", fontSize: 13, cursor: "pointer", fontFamily: "Inter,sans-serif", marginBottom: 20, display: "flex", alignItems: "center", gap: 5 }}>← Back to positions</button>
+
+            <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(34,197,94,.08)", border: "1px solid rgba(34,197,94,.2)", marginBottom: 22 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#4ade80" }}>{selectedPosition.label}</p>
+              <p style={{ fontSize: 11.5, color: "rgba(74,222,128,.5)", marginTop: 2 }}>{selectedPosition.dept} · {selectedPosition.type}</p>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                { key: "name", label: "Full Name", placeholder: "Your full name", required: true, type: "text" },
+                { key: "email", label: "Email Address", placeholder: "your@email.com", required: true, type: "email" },
+                { key: "phone", label: "Phone Number", placeholder: "+1 (555) 000-0000", required: false, type: "tel" },
+                { key: "linkedin", label: "LinkedIn Profile", placeholder: "https://linkedin.com/in/...", required: false, type: "url" },
+                { key: "portfolio", label: "Portfolio / GitHub", placeholder: "https://...", required: false, type: "url" },
+              ].map(field => (
+                <div key={field.key}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(226,232,248,.45)", marginBottom: 6, letterSpacing: ".03em" }}>
+                    {field.label} {field.required && <span style={{ color: "#f87171" }}>*</span>}
+                  </label>
+                  <input
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={formData[field.key]}
+                    onChange={e => setFormData(p => ({ ...p, [field.key]: e.target.value }))}
+                    style={{ width: "100%", padding: "11px 14px", borderRadius: 9, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.03)", color: "#e2e8f8", fontSize: 14, fontFamily: "Inter,sans-serif", outline: "none", transition: "border-color .2s" }}
+                    onFocus={e => e.target.style.borderColor = "rgba(34,197,94,.5)"}
+                    onBlur={e => e.target.style.borderColor = "rgba(255,255,255,.08)"}
+                  />
+                </div>
+              ))}
+
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(226,232,248,.45)", marginBottom: 6 }}>
+                  Why do you want to join Evix? <span style={{ color: "#f87171" }}>*</span>
+                </label>
+                <textarea
+                  placeholder="Tell us about yourself, your experience, and why you're excited about Evix..."
+                  rows={4}
+                  value={formData.why}
+                  onChange={e => setFormData(p => ({ ...p, why: e.target.value }))}
+                  style={{ width: "100%", padding: "11px 14px", borderRadius: 9, border: "1px solid rgba(255,255,255,.08)", background: "rgba(255,255,255,.03)", color: "#e2e8f8", fontSize: 14, fontFamily: "Inter,sans-serif", outline: "none", resize: "none", lineHeight: 1.6, transition: "border-color .2s" }}
+                  onFocus={e => e.target.style.borderColor = "rgba(34,197,94,.5)"}
+                  onBlur={e => e.target.style.borderColor = "rgba(255,255,255,.08)"}
+                />
+              </div>
+
+              {/* CV Upload */}
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(226,232,248,.45)", marginBottom: 6 }}>
+                  Upload Your CV <span style={{ color: "#f87171" }}>*</span>
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ padding: "20px", borderRadius: 10, border: `2px dashed ${cvName ? "rgba(34,197,94,.55)" : "rgba(255,255,255,.1)"}`, background: cvName ? "rgba(34,197,94,.06)" : "rgba(255,255,255,.02)", cursor: "pointer", textAlign: "center", transition: "all .2s" }}
+                  onMouseEnter={e => { if (!cvName) { e.currentTarget.style.borderColor = "rgba(34,197,94,.35)"; e.currentTarget.style.background = "rgba(34,197,94,.04)"; } }}
+                  onMouseLeave={e => { if (!cvName) { e.currentTarget.style.borderColor = "rgba(255,255,255,.1)"; e.currentTarget.style.background = "rgba(255,255,255,.02)"; } }}
+                >
+                  {cvName ? (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                      <div style={{ textAlign: "left" }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: "#4ade80" }}>{cvName}</p>
+                        <p style={{ fontSize: 11, color: "rgba(74,222,128,.5)" }}>Click to change</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 13.5, color: "rgba(226,232,248,.4)", marginBottom: 4 }}>Click to upload your CV</p>
+                      <p style={{ fontSize: 11, color: "rgba(226,232,248,.2)" }}>PDF, DOC, DOCX — max 10MB</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+              <button onClick={() => setSelectedPosition(null)} style={{ flex: 1, padding: 12, borderRadius: 9, border: "1px solid rgba(255,255,255,.07)", background: "transparent", color: "rgba(226,232,248,.4)", fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Cancel</button>
+              <button
+                onClick={handleSubmit}
+                disabled={!isFormValid}
+                style={{ flex: 2, padding: 12, borderRadius: 9, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: isFormValid ? "pointer" : "not-allowed", fontFamily: "Inter,sans-serif", opacity: isFormValid ? 1 : 0.35, transition: "opacity .2s" }}
+              >
+                Submit Application →
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── QUICK START DROPDOWN ──────────────────────────────────────────────────────
+function QuickStartDropdown({ isDark, t, onSelect, onClose }) {
+  return (
+    <div
+      style={{ position: "absolute", top: "calc(100% + 10px)", left: 0, minWidth: 260, borderRadius: 14, padding: 8, backdropFilter: "blur(28px)", animation: "dropIn .16s ease", zIndex: 200, boxShadow: "0 20px 60px rgba(0,0,0,.35)", background: isDark ? "rgba(0,0,0,.97)" : "rgba(250,255,250,.97)", border: `1px solid ${t.navBorder}` }}
+    >
+      <p style={{ fontSize: 10, letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(226,232,248,.25)", padding: "4px 10px 8px" }}>Choose a category</p>
+      {QUICK_START_TYPES.map(qs => (
+        <div key={qs.id}
+          onClick={() => { onSelect(qs.id); onClose(); }}
+          style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 10px", borderRadius: 9, cursor: "pointer", transition: "background .13s" }}
+          onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(34,197,94,.1)" : "rgba(34,197,94,.06)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+        >
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(34,197,94,.12)", border: "1px solid rgba(34,197,94,.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#4ade80" }}>{qs.label.slice(0,2).toUpperCase()}</span>
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: t.text, marginBottom: 1 }}>{qs.label}</div>
+            <div style={{ fontSize: 11, color: t.textMuted }}>{qs.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── LOGO COMPONENTS ──────────────────────────────────────────────────────────
+function EvixLogoFull({ height = 140, spinning = false }) {
+  return (
+    <img
+      src="/LOGOSS.png"
+      alt="Evix"
+      style={{
+        height,
+        width: "auto",
+        display: "block",
+        maxWidth: "100%",
+        animation: spinning ? "logoSpin 8s linear infinite" : undefined,
+      }}
+    />
+  );
+}
+
+function EvixLogoSymbol({ size = 70 }) {
+  return (
+    <img
+      src="/LOGOSS.png"
+      alt="Evix"
+      style={{
+        height: size,
+        width: size,
+        display: "block",
+        maxWidth: size * 1.1,
+        objectFit: "contain",
+        objectPosition: "left center",
+      }}
+    />
+  );
+}
+
+// ── FEATURES DATA ─────────────────────────────────────────────────────────────
+const FEATURES = [
+  {
+    number: "01",
+    title: "Complete HTML/CSS/JS",
+    desc: "Full single-file output with clean, semantic structure. Animations, components, and responsive layout included.",
+    stat: "100%",
+    statLabel: "single file",
+  },
+  {
+    number: "02",
+    title: "World-class Design",
+    desc: "Modern UI patterns with glassmorphism, gradients, smooth transitions, and Google Fonts — pixel-perfect.",
+    stat: "50+",
+    statLabel: "components",
+  },
+  {
+    number: "03",
+    title: "AI Chatbot Engine",
+    desc: "Real chatbot widgets powered by live AI. Contextual responses and beautiful chat UI out of the box.",
+    stat: "Live",
+    statLabel: "responses",
+  },
+  {
+    number: "04",
+    title: "One-click Download",
+    desc: "Your entire site in a single HTML file. Host anywhere. No dependencies, no build step needed.",
+    stat: "0",
+    statLabel: "dependencies",
+  },
+  {
+    number: "05",
+    title: "Live Preview",
+    desc: "See your site render instantly in the split editor. Edit code live and watch changes update in real time.",
+    stat: "<1s",
+    statLabel: "render time",
+  },
+  {
+    number: "06",
+    title: "Multiple Build Types",
+    desc: "Websites, landing pages, AI chatbots — each with specialized prompts tuned for the best output.",
+    stat: "3",
+    statLabel: "build modes",
+  },
+];
+
+export default function Home() {
+  const router = useRouter();
+  const [prompt, setPrompt] = useState("");
+  const [activeType, setActiveType] = useState("website");
+  const [scrolled, setScrolled] = useState(false);
+  const [charCount, setCharCount] = useState(0);
+  const [openMenu, setOpenMenu] = useState(null);
+  const [building, setBuilding] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [showCareersModal, setShowCareersModal] = useState(false);
+  const [inquiryForm, setInquiryForm] = useState({ name: "", email: "", message: "" });
+  const [inquirySent, setInquirySent] = useState(false);
+
+  const [mode, setMode] = useState("quick");
+  const [proStep, setProStep] = useState(0);
+  const [proAnswers, setProAnswers] = useState({});
+  const [proComplete, setProComplete] = useState(false);
+
+  const textareaRef = useRef(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scrollTo = (id) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(null);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") setShowInquiryModal(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const handlePromptChange = (e) => {
+    setPrompt(e.target.value);
+    setCharCount(e.target.value.length);
+    const ta = textareaRef.current;
+    if (ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSent(true);
-    setTimeout(() => setSent(false), 4000);
-    setFormData({ name: "", email: "", message: "" });
+  const buildEnrichedPrompt = (basePrompt) => {
+    if (mode === "quick" || !proComplete) return basePrompt;
+    const style = proAnswers.style || "";
+    const audience = proAnswers.audience || "";
+    const goal = proAnswers.goal || "";
+    const styleDesc = STYLE_PRESETS[style] || "";
+    return `[STYLE: ${styleDesc}] [AUDIENCE: ${audience}] [GOAL: ${goal}] ${basePrompt}`;
+  };
+
+  const handleBuild = () => {
+    if (!prompt.trim()) return;
+    setBuilding(true);
+    const finalPrompt = buildEnrichedPrompt(prompt.trim());
+    const encoded = encodeURIComponent(finalPrompt);
+    setTimeout(() => {
+      if (activeType === "chatbot") {
+        router.push(`/chatbot?prompt=${encoded}`);
+      } else {
+        router.push(`/builder?prompt=${encoded}&type=${activeType}`);
+      }
+    }, 300);
+  };
+
+  const handleExample = (ex) => {
+    setPrompt(ex); setCharCount(ex.length);
+    const ta = textareaRef.current;
+    if (ta) { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleBuild();
+  };
+
+  const handleProAnswer = (questionId, answerId) => {
+    const newAnswers = { ...proAnswers, [questionId]: answerId };
+    setProAnswers(newAnswers);
+    if (proStep < SMART_QUESTIONS.length - 1) {
+      setTimeout(() => setProStep(proStep + 1), 200);
+    } else {
+      setTimeout(() => setProComplete(true), 200);
+    }
+  };
+
+  const resetPro = () => {
+    setProStep(0);
+    setProAnswers({});
+    setProComplete(false);
+  };
+
+  const handleInquirySubmit = () => {
+    if (!inquiryForm.name.trim() || !inquiryForm.email.trim() || !inquiryForm.message.trim()) return;
+    setInquirySent(true);
+    setTimeout(() => {
+      setShowInquiryModal(false);
+      setInquirySent(false);
+      setInquiryForm({ name: "", email: "", message: "" });
+    }, 2500);
+  };
+
+  const handleQuickStart = (typeId) => {
+    router.push(`/business?type=${typeId}`);
+  };
+
+  const currentExamples = EXAMPLES[activeType] || EXAMPLES.website;
+  const currentQuestion = SMART_QUESTIONS[proStep];
+
+  const t = isDark ? {
+    bg: "#000000",
+    nav: "rgba(0,0,0,.94)",
+    navBorder: "rgba(255,255,255,.05)",
+    text: "#e2e8f8", textMuted: "rgba(226,232,248,.4)", textDim: "rgba(226,232,248,.18)",
+    surface: "rgba(255,255,255,.022)", surfaceBorder: "rgba(255,255,255,.055)",
+    inputBg: "rgba(255,255,255,.035)", inputBorder: "rgba(255,255,255,.09)",
+    footerBorder: "rgba(255,255,255,.05)", heroTitle: "#f1f4ff",
+    featureTitle: "#f1f4ff", pricingTitle: "#f1f4ff", ctaTitle: "#f1f4ff",
+  } : {
+    bg: "#f5f6f5", nav: "rgba(245,246,245,.94)", navBorder: "rgba(34,197,94,.12)",
+    text: "#0a1a0e", textMuted: "rgba(10,26,14,.55)", textDim: "rgba(10,26,14,.32)",
+    surface: "rgba(34,197,94,.04)", surfaceBorder: "rgba(34,197,94,.12)",
+    inputBg: "rgba(255,255,255,.9)", inputBorder: "rgba(34,197,94,.18)",
+    footerBorder: "rgba(34,197,94,.12)", heroTitle: "#071a0b",
+    featureTitle: "#071a0b", pricingTitle: "#071a0b", ctaTitle: "#071a0b",
   };
 
   return (
-    <>
-      <style>{styles}</style>
+    <div style={{ background: t.bg, color: t.text, fontFamily: "'Inter', sans-serif", minHeight: "100vh", overflowX: "hidden", transition: "background .3s, color .3s" }}>
+      <style>{`
+        @font-face {
+          font-family: 'Casa';
+          src: url('/fonts/Casa-Regular.otf') format('opentype');
+          font-weight: 400;
+          font-style: normal;
+          font-display: swap;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 2px; }
+        ::-webkit-scrollbar-thumb { background: rgba(34,197,94,.4); border-radius: 2px; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes dropIn { from { opacity:0; transform:translateY(-8px) scale(.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+        @keyframes logoGlow { 0%,100% { filter: drop-shadow(0 0 10px rgba(34,197,94,.8)) drop-shadow(0 0 26px rgba(22,163,74,.5)); } 50% { filter: drop-shadow(0 0 22px rgba(74,222,128,1)) drop-shadow(0 0 44px rgba(34,197,94,.75)); } }
+        @keyframes logoSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes stepIn { from { opacity:0; transform:translateX(16px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes checkPop { 0% { transform:scale(0); } 60% { transform:scale(1.2); } 100% { transform:scale(1); } }
+        @keyframes modalIn { from { opacity:0; transform:scale(.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes floatY { 0%,100% { transform: translateY(0px) rotateX(0deg); } 50% { transform: translateY(-6px) rotateX(2deg); } }
+        @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
 
-      {/* ── NAV ── */}
-      <nav className={`nav ${scrolled ? "scrolled" : ""}`}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "18px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div className="orbitron grad-text" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "0.08em" }}>
-            NOVIX
+        .evix-logo-text {
+          font-family: 'Casa', 'Bebas Neue', sans-serif !important;
+          font-size: 22px;
+          letter-spacing: .06em;
+          background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .nav-trigger { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: color .18s, background .18s; padding: 6px 10px; border-radius: 6px; border: none; background: transparent; font-family: 'Inter', sans-serif; }
+        .nav-trigger svg { transition: transform .2s; }
+        .nav-trigger.open svg { transform: rotate(180deg); }
+        .dropdown { position: absolute; top: calc(100% + 10px); left: 0; min-width: 280px; border-radius: 14px; padding: 8px; backdrop-filter: blur(28px); animation: dropIn .16s ease; z-index: 200; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+        .dropdown-item { display: flex; gap: 11px; align-items: center; padding: 10px 10px; border-radius: 9px; cursor: pointer; transition: background .13s; }
+        .dropdown-item-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+        .dropdown-item-label { font-size: 13px; font-weight: 600; margin-bottom: 1px; }
+        .dropdown-item-desc { font-size: 11px; }
+        .dropdown-item-price { font-size: 10.5px; font-weight: 600; margin-top: 3px; }
+        .dropdown-badge { display: inline-block; padding: 1px 7px; border-radius: 100px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-left: 6px; }
+        .type-btn { display: flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 8px; border: 1px solid; background: transparent; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; font-family: 'Inter', sans-serif; white-space: nowrap; }
+        .example-chip { padding: 6px 14px; border-radius: 100px; border: 1px solid; background: transparent; font-size: 12px; cursor: pointer; transition: all .16s; font-family: 'Inter', sans-serif; white-space: nowrap; }
+        .build-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all .22s; font-family: 'Inter', sans-serif; letter-spacing: -.01em; }
+        .build-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(34,197,94,.5); }
+        .build-btn:disabled { opacity: .35; cursor: not-allowed; }
+        .agent-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px 24px; border-radius: 10px; border: 1px solid rgba(74,222,128,.4); background: rgba(74,222,128,.08); color: #4ade80; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .22s; font-family: 'Inter', sans-serif; letter-spacing: -.01em; }
+        .agent-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(34,197,94,.3); background: rgba(74,222,128,.14); border-color: rgba(74,222,128,.6); }
+        .pricing-card { border: 1px solid; border-radius: 16px; padding: 28px 24px; transition: all .25s; display: flex; flex-direction: column; }
+        .pricing-card:hover { transform: translateY(-3px); }
+        .pricing-cta { display: flex; align-items: center; justify-content: center; padding: 11px 20px; border-radius: 9px; border: 1px solid; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .2s; font-family: 'Inter',sans-serif; }
+        .pricing-cta.primary { background: linear-gradient(135deg,#16a34a,#22c55e); border-color: transparent; color: #fff; }
+        .pricing-cta.primary:hover { box-shadow: 0 6px 24px rgba(34,197,94,.4); }
+        .marquee-track { display: flex; gap: 12px; animation: marquee 28s linear infinite; width: max-content; }
+        .theme-toggle { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9px; border: 1px solid; background: transparent; cursor: pointer; font-size: 17px; transition: all .2s; }
+        .theme-toggle:hover { transform: scale(1.1) rotate(15deg); }
+        .mode-toggle-btn { padding: 7px 16px; border-radius: 8px; border: 1px solid; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all .18s; font-family: 'Inter',sans-serif; }
+        .pro-option-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border-radius: 10px; border: 1px solid; background: transparent; cursor: pointer; transition: all .18s; font-family: 'Inter',sans-serif; min-width: 90px; flex: 1; }
+        .pro-option-btn:hover { border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.08); }
+        .pro-option-btn.selected { border-color: rgba(34,197,94,.65); background: rgba(34,197,94,.12); }
+        .textarea-wrap textarea { width: 100%; min-height: 56px; max-height: 160px; padding: 16px; border-radius: 10px 10px 0 0; border: 1px solid; border-bottom: none; font-size: 15px; font-family: 'Inter', sans-serif; font-weight: 400; outline: none; resize: none; line-height: 1.6; transition: border-color .2s, background .3s, color .3s; }
+        .textarea-bottom { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 0 0 10px 10px; border: 1px solid; border-top: 1px solid; gap: 10px; }
+        .hero-logo-wrap { animation: logoGlow 3s ease-in-out infinite; }
+        .biz-nav-btn { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 600; cursor: pointer; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(34,197,94,.3); background: rgba(34,197,94,.07); color: #4ade80; transition: all .18s; font-family: 'Inter',sans-serif; }
+        .biz-nav-btn:hover { border-color: rgba(34,197,94,.55); background: rgba(34,197,94,.14); }
+        .modal-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; animation: fadeIn .2s ease; }
+        .modal-box { background: #000000; border: 1px solid rgba(34,197,94,.25); border-radius: 18px; padding: 32px; max-width: 460px; width: 90%; box-shadow: 0 24px 80px rgba(0,0,0,.8); animation: modalIn .25s ease; }
+        .inquiry-input { width: 100%; padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.035); color: #e2e8f8; font-size: 14px; font-family: 'Inter',sans-serif; outline: none; transition: border-color .2s; }
+        .inquiry-input:focus { border-color: rgba(34,197,94,.5); box-shadow: 0 0 0 3px rgba(34,197,94,.08); }
+        .inquiry-input::placeholder { color: rgba(226,232,248,.2); }
+
+        /* ── 3D FEATURE CARD STYLES ── */
+        .feat-card-3d {
+          position: relative;
+          border-radius: 16px;
+          padding: 0;
+          cursor: default;
+          transition: transform .35s cubic-bezier(.22,.68,0,1.2), box-shadow .35s ease;
+          transform-style: preserve-3d;
+          perspective: 800px;
+        }
+        .feat-card-3d:hover {
+          transform: translateY(-8px) rotateX(3deg) rotateY(-1deg) scale(1.02);
+        }
+        .feat-card-3d-inner {
+          position: relative;
+          border-radius: 16px;
+          padding: 28px 26px 24px;
+          height: 100%;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,.07);
+          background: linear-gradient(145deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.015) 100%);
+          transition: border-color .3s, box-shadow .3s;
+        }
+        .feat-card-3d:hover .feat-card-3d-inner {
+          border-color: rgba(34,197,94,.35);
+          box-shadow: 0 0 0 1px rgba(34,197,94,.1), 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        .feat-card-3d-glow {
+          position: absolute;
+          inset: -1px;
+          border-radius: 17px;
+          background: radial-gradient(ellipse at 30% 20%, rgba(34,197,94,.12) 0%, transparent 60%);
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity .3s;
+        }
+        .feat-card-3d:hover .feat-card-3d-glow { opacity: 1; }
+        .feat-card-3d-noise {
+          position: absolute;
+          inset: 0;
+          border-radius: 16px;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+          opacity: .4;
+          pointer-events: none;
+        }
+        .feat-number {
+          font-size: 10px;
+          letter-spacing: .2em;
+          text-transform: uppercase;
+          font-weight: 700;
+          color: rgba(34,197,94,.5);
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .feat-number::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, rgba(34,197,94,.3), transparent);
+          max-width: 40px;
+        }
+        .feat-stat-block {
+          margin-bottom: 16px;
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+        }
+        .feat-stat-num {
+          font-size: 38px;
+          font-weight: 800;
+          letter-spacing: -.04em;
+          line-height: 1;
+          background: linear-gradient(135deg, #f1f4ff 30%, rgba(74,222,128,.85) 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .feat-stat-label {
+          font-size: 11px;
+          color: rgba(226,232,248,.3);
+          font-weight: 500;
+          letter-spacing: .04em;
+        }
+        .feat-bottom-bar {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(34,197,94,.5), transparent);
+          border-radius: 0 0 16px 16px;
+          opacity: 0;
+          transition: opacity .3s;
+        }
+        .feat-card-3d:hover .feat-bottom-bar { opacity: 1; }
+
+        @media (max-width: 640px) { .hero-title { font-size: 34px !important; white-space: normal !important; } .type-btns { flex-wrap: wrap; } .nav-mid { display: none !important; } .pricing-grid { grid-template-columns: 1fr !important; } .feat-grid { grid-template-columns: 1fr !important; } }
+      `}</style>
+
+      {/* INQUIRY MODAL */}
+      {showInquiryModal && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowInquiryModal(false); }}>
+          <div className="modal-box">
+            {!inquirySent ? (
+              <>
+                <div style={{ marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 20, fontWeight: 700, color: "#f1f4ff", marginBottom: 6, letterSpacing: "-.025em" }}>Send an Inquiry</h3>
+                  <p style={{ fontSize: 13.5, color: "rgba(226,232,248,.4)", lineHeight: 1.6 }}>Interested in partnering with Evix? Tell us about your project and we'll get back to you within 24 hours.</p>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+                  <input className="inquiry-input" placeholder="Your Name *" value={inquiryForm.name} onChange={e => setInquiryForm(p => ({ ...p, name: e.target.value }))} />
+                  <input className="inquiry-input" placeholder="Email Address *" type="email" value={inquiryForm.email} onChange={e => setInquiryForm(p => ({ ...p, email: e.target.value }))} />
+                  <textarea className="inquiry-input" placeholder="Tell us about your project *" rows={4} style={{ resize: "none" }} value={inquiryForm.message} onChange={e => setInquiryForm(p => ({ ...p, message: e.target.value }))} />
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setShowInquiryModal(false)} style={{ flex: 1, padding: 11, borderRadius: 9, border: "1px solid rgba(255,255,255,.07)", background: "transparent", color: "rgba(226,232,248,.45)", fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Cancel</button>
+                  <button
+                    onClick={handleInquirySubmit}
+                    disabled={!inquiryForm.name.trim() || !inquiryForm.email.trim() || !inquiryForm.message.trim()}
+                    style={{ flex: 2, padding: 11, borderRadius: 9, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: "pointer", fontFamily: "Inter,sans-serif", opacity: (!inquiryForm.name.trim() || !inquiryForm.email.trim() || !inquiryForm.message.trim()) ? 0.4 : 1, transition: "opacity .2s" }}
+                  >Send Inquiry</button>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <h3 style={{ fontSize: 20, fontWeight: 700, color: "#f1f4ff", marginBottom: 8 }}>Inquiry Sent!</h3>
+                <p style={{ fontSize: 14, color: "rgba(226,232,248,.4)", lineHeight: 1.6 }}>Thanks for reaching out. We'll get back to you within 24 hours.</p>
+              </div>
+            )}
           </div>
-          <div style={{ display: "flex", gap: 36, alignItems: "center" }}>
-            {[["Services", "services"], ["Work", "portfolio"], ["How It Works", "how"], ["Contact", "contact"]].map(([label, id]) => (
-              <span key={id} className="nav-link" onClick={() => scrollTo(id)}>{label}</span>
-            ))}
-            <button className="btn-primary" style={{ padding: "10px 24px", fontSize: 13 }} onClick={() => scrollTo("contact")}>
-              Get Started
+        </div>
+      )}
+
+      {/* CAREERS MODAL */}
+      {showCareersModal && <CareersModal onClose={() => setShowCareersModal(false)} />}
+
+      {/* NAV */}
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: scrolled ? t.nav : "transparent", backdropFilter: scrolled ? "blur(20px)" : "none", borderBottom: scrolled ? `1px solid ${t.navBorder}` : "1px solid transparent", transition: "all .3s" }}>
+        <div style={{ maxWidth: 1160, margin: "0 auto", padding: "11px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }} ref={menuRef}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <EvixLogoSymbol size={90} />
+            <span className="evix-logo-text">Evix</span>
+          </div>
+
+          <div className="nav-mid" style={{ display: "flex", alignItems: "center", gap: 2, position: "relative" }}>
+            {/* Services */}
+            <div style={{ position: "relative" }}>
+              <button className={`nav-trigger ${openMenu === "services" ? "open" : ""}`} style={{ color: openMenu === "services" ? t.text : t.textMuted, background: openMenu === "services" ? (isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)") : "transparent" }} onClick={() => setOpenMenu(openMenu === "services" ? null : "services")}>
+                Services
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2.5 4L5.5 7L8.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+              {openMenu === "services" && (
+                <div className="dropdown" style={{ background: isDark ? "rgba(0,0,0,.97)" : "rgba(250,255,250,.97)", border: `1px solid ${t.navBorder}` }}>
+                  {NAV_SERVICES.map(s => (
+                    <div key={s.label} className="dropdown-item"
+                      onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(34,197,94,.1)" : "rgba(34,197,94,.06)"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                      onClick={() => { router.push(s.href); setOpenMenu(null); }}
+                    >
+                      <div className="dropdown-item-icon" style={{ background: `${s.color}15`, color: s.color }}>{s.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div className="dropdown-item-label" style={{ color: t.text }}>
+                          {s.label}
+                          {s.badge && <span className="dropdown-badge" style={{ background: `${s.color}20`, color: s.color }}>{s.badge}</span>}
+                        </div>
+                        <div className="dropdown-item-desc" style={{ color: t.textMuted }}>{s.desc}</div>
+                        <div className="dropdown-item-price" style={{ color: s.color }}>{s.price}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pricing */}
+            <button className="nav-trigger" style={{ color: t.textMuted }}
+              onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
+              onClick={() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" })}
+            >Pricing</button>
+
+            {/* Quick Start — replaces AI Business */}
+            <div style={{ position: "relative" }}>
+              <button className={`biz-nav-btn ${openMenu === "quickstart" ? "open" : ""}`} onClick={() => setOpenMenu(openMenu === "quickstart" ? null : "quickstart")}>
+                Quick Start
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2.5 4L5.5 7L8.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+              {openMenu === "quickstart" && (
+                <QuickStartDropdown isDark={isDark} t={t} onSelect={handleQuickStart} onClose={() => setOpenMenu(null)} />
+              )}
+            </div>
+
+            {/* Partnership */}
+            <button className="nav-trigger" style={{ color: t.textMuted }}
+              onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
+              onClick={() => setShowInquiryModal(true)}
+            >Partnership</button>
+
+            {/* Careers */}
+            <button className="nav-trigger" style={{ color: t.textMuted }}
+              onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
+              onClick={() => setShowCareersModal(true)}
+            >Careers</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <button className="theme-toggle" style={{ borderColor: isDark ? "rgba(255,255,255,.1)" : "rgba(34,197,94,.2)", color: isDark ? "#4ade80" : "#16a34a" }} onClick={() => setIsDark(!isDark)} title={isDark ? "Light Mode" : "Dark Mode"}>
+              {isDark ? "☀" : "◑"}
             </button>
+            <button style={{ background: "transparent", border: "none", color: t.textMuted, fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "'Inter',sans-serif", padding: "6px 12px", borderRadius: 7, transition: "color .18s" }}
+              onMouseEnter={e => e.currentTarget.style.color = t.text}
+              onMouseLeave={e => e.currentTarget.style.color = t.textMuted}
+            >Log in</button>
+            <button onClick={() => router.push("/builder")}
+              style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all .2s", boxShadow: "0 0 12px rgba(34,197,94,.3)" }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 22px rgba(34,197,94,.55)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 12px rgba(34,197,94,.3)"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >Start Building →</button>
           </div>
         </div>
       </nav>
 
-      {/* ── HERO ── */}
-      <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "140px 32px 100px", position: "relative", overflow: "hidden" }}>
-        <div className="hero-bg">
-          <div className="orb orb-1" />
-          <div className="orb orb-2" />
-          <div className="orb orb-3" />
+      {/* HERO */}
+      <section style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "120px 24px 80px", position: "relative" }}>
+        <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+          <div style={{ position: "absolute", width: 700, height: 700, borderRadius: "50%", background: isDark ? "radial-gradient(circle,rgba(22,163,74,.1) 0%,transparent 65%)" : "radial-gradient(circle,rgba(22,163,74,.06) 0%,transparent 65%)", top: "0%", left: "-5%", filter: "blur(80px)" }} />
+          <div style={{ position: "absolute", width: 550, height: 550, borderRadius: "50%", background: isDark ? "radial-gradient(circle,rgba(34,197,94,.09) 0%,transparent 65%)" : "radial-gradient(circle,rgba(34,197,94,.05) 0%,transparent 65%)", top: "15%", right: "0%", filter: "blur(70px)" }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${isDark ? "rgba(34,197,94,.05)" : "rgba(34,197,94,.06)"} 1px, transparent 1px)`, backgroundSize: "32px 32px" }} />
         </div>
-        <div className="grid-bg" />
 
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 860, margin: "0 auto" }}>
-          {/* Badge */}
-          <div className="fade-up d1" style={{ marginBottom: 36 }}>
-            <span className="badge">
-              <span className="pulse-dot" />
-              Now Live — NOVIX Conversions
-            </span>
+        <div style={{ position: "relative", zIndex: 2, maxWidth: 820, width: "100%", textAlign: "center" }}>
+          <div className="hero-logo-wrap" style={{ display: "flex", justifyContent: "center", marginBottom: 36 }}>
+            <EvixLogoFull height={180} spinning={true} />
           </div>
 
-          {/* Headline */}
-          <h1 className="orbitron fade-up d2" style={{ fontSize: "clamp(36px, 6.5vw, 80px)", fontWeight: 900, lineHeight: 1.08, marginBottom: 28, letterSpacing: "-0.02em" }}>
-            Build Websites<br />
-            That <span className="grad-text">Convert.</span><br />
-            <span style={{ color: "rgba(226,232,240,0.8)", fontWeight: 400, fontSize: "0.85em" }}>Automate Everything.</span>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 14px", borderRadius: 100, border: "1px solid rgba(34,197,94,.28)", background: "rgba(34,197,94,.07)", marginBottom: 28, animation: "fadeUp .8s ease forwards" }}>
+            <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", display: "inline-block", animation: "pulse 2s ease-in-out infinite" }} />
+            <span style={{ fontSize: 11.5, color: "rgba(74,222,128,.8)", letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 500 }}>AI Web Builder · Build anything, instantly</span>
+          </div>
+
+          <h1 className="hero-title" style={{ fontSize: 62, fontWeight: 700, lineHeight: 1.06, letterSpacing: "-.045em", color: t.heroTitle, marginBottom: 20, animation: "fadeUp .9s .05s ease both", whiteSpace: "nowrap" }}>
+            Don't imagine it.{" "}
+            <span style={{ background: "linear-gradient(135deg, #4ade80, #22c55e, #16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Build It.</span>
           </h1>
 
-          {/* Sub */}
-          <p className="fade-up d3" style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "var(--muted)", lineHeight: 1.8, maxWidth: 560, margin: "0 auto 52px", fontWeight: 400 }}>
-            We design high-converting websites, landing pages, and AI chatbots that grow your business automatically.
+          <p style={{ fontSize: 17, color: t.textMuted, lineHeight: 1.8, maxWidth: 480, margin: "0 auto 32px", fontWeight: 300, animation: "fadeUp .9s .12s ease both" }}>
+            Describe your idea. Get a complete, production-ready website, landing page, or AI chatbot.
           </p>
 
-          {/* CTAs */}
-          <div className="fade-up d4" style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn-primary" onClick={() => scrollTo("contact")}>
-              Get Started →
-            </button>
-            <button className="btn-ghost" onClick={() => scrollTo("portfolio")}>
-              View Our Work
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="fade-up d5" style={{ display: "flex", gap: 48, justifyContent: "center", marginTop: 80, paddingTop: 48, borderTop: "1px solid rgba(255,255,255,0.06)", flexWrap: "wrap" }}>
-            {[["50+", "Projects Delivered"], ["3x", "Avg. Conversion Lift"], ["24/7", "AI Automation"]].map(([val, label]) => (
-              <div key={label} style={{ textAlign: "center" }}>
-                <div className="orbitron grad-text-bp" style={{ fontSize: 32, fontWeight: 700 }}>{val}</div>
-                <div style={{ fontSize: 11, color: "rgba(226,232,240,0.35)", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 6 }}>{label}</div>
-              </div>
+          {/* Build type */}
+          <div className="type-btns" style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20, animation: "fadeUp .9s .18s ease both" }}>
+            {BUILD_TYPES.map(tp => (
+              <button key={tp.id} className="type-btn"
+                style={{ borderColor: activeType === tp.id ? "rgba(34,197,94,.6)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)"), color: activeType === tp.id ? "#4ade80" : t.textMuted, background: activeType === tp.id ? "rgba(34,197,94,.12)" : "transparent" }}
+                onClick={() => { setActiveType(tp.id); setPrompt(""); setCharCount(0); resetPro(); }}
+              >
+                <span style={{ fontSize: 14 }}>{tp.icon}</span>{tp.label}
+              </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── SERVICES ── */}
-      <section id="services" style={{ padding: "120px 32px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 80 }}>
-            <div className="badge" style={{ marginBottom: 20, background: "rgba(168,85,247,0.1)", borderColor: "rgba(168,85,247,0.3)", color: "var(--purple)" }}>
-              What We Do
-            </div>
-            <h2 className="orbitron" style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 700, marginBottom: 20 }}>
-              Our <span className="grad-text">Services</span>
-            </h2>
-            <p style={{ color: "var(--muted)", maxWidth: 480, margin: "0 auto" }}>
-              Everything your business needs to dominate online, all under one roof.
-            </p>
-            <div className="divider" style={{ marginTop: 28 }} />
+          {/* Mode Toggle */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 20, animation: "fadeUp .9s .2s ease both" }}>
+            <button className="mode-toggle-btn"
+              style={{ borderColor: mode === "quick" ? "rgba(34,197,94,.55)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)"), color: mode === "quick" ? "#4ade80" : t.textMuted, background: mode === "quick" ? "rgba(34,197,94,.1)" : "transparent" }}
+              onClick={() => { setMode("quick"); resetPro(); }}
+            >Build Instantly</button>
+            <button className="mode-toggle-btn"
+              style={{ borderColor: mode === "pro" ? "rgba(74,222,128,.55)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)"), color: mode === "pro" ? "#4ade80" : t.textMuted, background: mode === "pro" ? "rgba(74,222,128,.1)" : "transparent" }}
+              onClick={() => { setMode("pro"); resetPro(); }}
+            >Use AI Setup</button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
-            {services.map((s) => (
-              <div key={s.title} className="glass-card" style={{ padding: "40px 32px" }}>
-                <div className="card-glow-inner" style={{ background: `radial-gradient(circle, ${s.dimColor.replace("0.12", "0.25")} 0%, transparent 70%)` }} />
-                <div className="icon-wrap" style={{ background: s.dimColor, border: `1px solid ${s.borderColor}` }}>
-                  <span>{s.icon}</span>
-                </div>
-                <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 20, background: s.dimColor, border: `1px solid ${s.borderColor}`, fontSize: 11, letterSpacing: "0.1em", color: s.color, textTransform: "uppercase", marginBottom: 14 }}>
-                  {s.tag}
-                </div>
-                <h3 className="orbitron" style={{ fontSize: 22, fontWeight: 700, marginBottom: 16, color: "#fff" }}>{s.title}</h3>
-                <ul style={{ listStyle: "none", marginBottom: 20 }}>
-                  {s.points.map((p) => (
-                    <li key={p} style={{ color: "var(--muted)", fontSize: 14, marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ color: s.color, flexShrink: 0 }}>▸</span> {p}
-                    </li>
-                  ))}
-                </ul>
-                <p style={{ color: "rgba(226,232,240,0.5)", fontSize: 14, lineHeight: 1.75 }}>{s.desc}</p>
+          {/* PRO MODE FLOW */}
+          {mode === "pro" && !proComplete && (
+            <div style={{ animation: "stepIn .3s ease", marginBottom: 20, background: isDark ? "rgba(255,255,255,.025)" : "rgba(34,197,94,.04)", border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.12)"}`, borderRadius: 14, padding: "22px 20px" }}>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 18 }}>
+                {SMART_QUESTIONS.map((_, i) => (
+                  <div key={i} style={{ width: i <= proStep ? 24 : 6, height: 6, borderRadius: 3, background: i < proStep ? "#22c55e" : i === proStep ? "linear-gradient(90deg,#22c55e,#4ade80)" : (isDark ? "rgba(255,255,255,.1)" : "rgba(34,197,94,.15)"), transition: "all .3s" }} />
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PORTFOLIO ── */}
-      <section id="portfolio" style={{ padding: "120px 32px", background: "rgba(59,130,246,0.02)", borderTop: "1px solid rgba(59,130,246,0.08)", borderBottom: "1px solid rgba(59,130,246,0.08)" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 80 }}>
-            <div className="badge" style={{ marginBottom: 20, background: "rgba(236,72,153,0.1)", borderColor: "rgba(236,72,153,0.3)", color: "var(--pink)" }}>
-              Our Work
+              <p style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", color: t.textDim, marginBottom: 8 }}>{currentQuestion.subtext}</p>
+              <p style={{ fontSize: 17, fontWeight: 600, color: t.text, marginBottom: 18, letterSpacing: "-.02em" }}>{currentQuestion.question}</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                {currentQuestion.options.map(opt => (
+                  <button key={opt.id} className={`pro-option-btn ${proAnswers[currentQuestion.id] === opt.id ? "selected" : ""}`}
+                    style={{ borderColor: proAnswers[currentQuestion.id] === opt.id ? "rgba(34,197,94,.65)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)"), color: proAnswers[currentQuestion.id] === opt.id ? "#4ade80" : t.textMuted, background: proAnswers[currentQuestion.id] === opt.id ? "rgba(34,197,94,.12)" : "transparent" }}
+                    onClick={() => handleProAnswer(currentQuestion.id, opt.id)}
+                  >
+                    <span style={{ fontSize: 18, color: "#22c55e" }}>{opt.icon}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 600 }}>{opt.label}</span>
+                    <span style={{ fontSize: 10.5, color: t.textDim }}>{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+              {proStep > 0 && (
+                <button onClick={() => setProStep(proStep - 1)} style={{ marginTop: 14, background: "transparent", border: "none", color: t.textDim, fontSize: 12, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>← Back</button>
+              )}
             </div>
-            <h2 className="orbitron" style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 700, marginBottom: 20 }}>
-              Recent <span className="grad-text">Projects</span>
-            </h2>
-            <p style={{ color: "var(--muted)", maxWidth: 440, margin: "0 auto" }}>Real results from real businesses we've transformed.</p>
-            <div className="divider" style={{ marginTop: 28 }} />
-          </div>
+          )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
-            {portfolio.map((p) => (
-              <div key={p.title} className="portfolio-card">
-                <div className="portfolio-thumb" style={{ background: p.bg }}>
-                  <span style={{ fontSize: 64 }}>{p.emoji}</span>
-                  <div className="portfolio-overlay">
-                    <button className="btn-primary" style={{ padding: "12px 28px", fontSize: 14 }}
-                      onClick={() => scrollTo("contact")}>
-                      View Project →
-                    </button>
-                  </div>
-                </div>
-                <div style={{ padding: "28px 28px 32px" }}>
-                  <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 20, background: `${p.accent}22`, border: `1px solid ${p.accent}44`, fontSize: 11, letterSpacing: "0.1em", color: p.accent, textTransform: "uppercase", marginBottom: 14 }}>
-                    {p.tag}
-                  </div>
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 10, color: "#fff" }}>{p.title}</h3>
-                  <p style={{ color: "var(--muted)", fontSize: 14, lineHeight: 1.7, marginBottom: 20 }}>{p.desc}</p>
-                  <button className="btn-ghost" style={{ padding: "10px 24px", fontSize: 13, borderColor: `${p.accent}66`, color: p.accent }}
-                    onClick={() => scrollTo("contact")}>
-                    View Project →
+          {/* PRO COMPLETE SUMMARY */}
+          {mode === "pro" && proComplete && (
+            <div style={{ animation: "stepIn .3s ease", marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              {Object.entries(proAnswers).map(([key, val]) => (
+                <span key={key} style={{ padding: "5px 12px", borderRadius: 100, border: "1px solid rgba(34,197,94,.4)", background: "rgba(34,197,94,.1)", fontSize: 12, color: "#4ade80", display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ animation: "checkPop .3s ease" }}>✓</span> {val}
+                </span>
+              ))}
+              <button onClick={resetPro} style={{ padding: "5px 12px", borderRadius: 100, border: "1px solid rgba(255,255,255,.07)", background: "transparent", fontSize: 12, color: t.textDim, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Reset</button>
+            </div>
+          )}
+
+          {/* TEXTAREA */}
+          {(mode === "quick" || proComplete) && (
+            <div style={{ animation: "fadeUp .9s .22s ease both", marginBottom: 16 }}>
+              <div className="textarea-wrap">
+                <textarea ref={textareaRef} value={prompt} onChange={handlePromptChange} onKeyDown={handleKeyDown}
+                  placeholder={mode === "pro" && proComplete ? `Great choices! Now describe your ${BUILD_TYPES.find(t=>t.id===activeType)?.label.toLowerCase()} in detail…` : `What do you want to build?`}
+                  rows={2}
+                  style={{ background: t.inputBg, borderColor: t.inputBorder, color: t.text }}
+                />
+                <div className="textarea-bottom" style={{ background: isDark ? "rgba(255,255,255,.025)" : "rgba(255,255,255,.6)", borderColor: t.inputBorder }}>
+                  <span style={{ fontSize: 11, color: t.textDim }}>
+                    {charCount > 0 ? `${charCount} chars · ` : ""}<span style={{ opacity: .6 }}>⌘+Enter to build</span>
+                    {mode === "pro" && proComplete && <span style={{ color: "#22c55e", marginLeft: 6 }}>· AI-enhanced prompt ✦</span>}
+                  </span>
+                  <button className="build-btn" disabled={!prompt.trim() || building} onClick={handleBuild} style={{ width: "auto", padding: "9px 22px", fontSize: 13.5, borderRadius: 8 }}>
+                    {building ? "Loading…" : activeType === "chatbot" ? "Build Chatbot →" : "Build →"}
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="how" style={{ padding: "120px 32px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 80 }}>
-            <div className="badge" style={{ marginBottom: 20 }}>The Process</div>
-            <h2 className="orbitron" style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 700, marginBottom: 20 }}>
-              How It <span className="grad-text">Works</span>
-            </h2>
-            <p style={{ color: "var(--muted)", maxWidth: 440, margin: "0 auto" }}>From idea to a live, converting system in record time.</p>
-            <div className="divider" style={{ marginTop: 28 }} />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 48, position: "relative" }}>
-            {steps.map((s, i) => (
-              <div key={s.num} style={{ textAlign: "center", position: "relative" }}>
-                {i < steps.length - 1 && (
-                  <div style={{ position: "absolute", top: 32, left: "60%", width: "80%", height: 1, background: "linear-gradient(to right, rgba(168,85,247,0.4), rgba(59,130,246,0.2))", display: "none" }} />
-                )}
-                <div className="step-num">{s.num}</div>
-                <h3 className="orbitron" style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>{s.title}</h3>
-                <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.75 }}>{s.desc}</p>
+              {/* Use Quick Start CTA */}
+              <div style={{ marginTop: 12 }}>
+                <button className="agent-btn" onClick={() => router.push("/business")}>
+                  Use Quick Start
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 100, background: "rgba(34,197,94,.2)", border: "1px solid rgba(34,197,94,.35)", color: "#4ade80", marginLeft: 4 }}>New</span>
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ── */}
-      <section style={{ padding: "120px 32px", background: "rgba(168,85,247,0.02)", borderTop: "1px solid rgba(168,85,247,0.08)", borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 80 }}>
-            <div className="badge" style={{ marginBottom: 20, background: "rgba(168,85,247,0.1)", borderColor: "rgba(168,85,247,0.3)", color: "var(--purple)" }}>
-              Social Proof
             </div>
-            <h2 className="orbitron" style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 700, marginBottom: 20 }}>
-              Trusted by <span className="grad-text">Businesses</span>
-            </h2>
-            <div className="divider" style={{ marginTop: 28 }} />
-          </div>
+          )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
-            {testimonials.map((t) => (
-              <div key={t.name} className="testimonial-card">
-                <div className="quote-mark">"</div>
-                <div className="stars">★★★★★</div>
-                <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 20, background: `${t.color}22`, border: `1px solid ${t.color}44`, fontSize: 11, letterSpacing: "0.1em", color: t.color, textTransform: "uppercase", marginBottom: 20 }}>
-                  {t.service}
-                </div>
-                <p style={{ color: "rgba(226,232,240,0.8)", lineHeight: 1.8, fontSize: 15, marginBottom: 32, fontStyle: "italic", position: "relative", zIndex: 1 }}>
-                  {t.quote}
-                </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: "50%", background: `linear-gradient(135deg, ${t.color}, ${t.color}88)`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 18, flexShrink: 0, fontFamily: "'Orbitron', monospace" }}>
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 15 }}>{t.name}</div>
-                    <div style={{ color: t.color, fontSize: 12, marginTop: 3, opacity: 0.8 }}>{t.role}</div>
-                  </div>
-                </div>
+          {(mode === "quick" || proComplete) && (
+            <p style={{ fontSize: 11.5, color: t.textDim, marginBottom: 18, animation: "fadeUp .9s .24s ease both" }}>No credit card required</p>
+          )}
+
+          {(mode === "quick" || proComplete) && (
+            <div style={{ animation: "fadeUp .9s .28s ease both" }}>
+              <p style={{ fontSize: 11, color: t.textDim, marginBottom: 10, letterSpacing: ".08em", textTransform: "uppercase" }}>Try an example</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, justifyContent: "center" }}>
+                {currentExamples.slice(0, 4).map(ex => (
+                  <button key={ex} className="example-chip"
+                    style={{ borderColor: isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)", color: t.textMuted }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(34,197,94,.5)"; e.currentTarget.style.color = "#4ade80"; e.currentTarget.style.background = "rgba(34,197,94,.08)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)"; e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
+                    onClick={() => handleExample(ex)}
+                  >
+                    {ex.length > 52 ? ex.slice(0, 52) + "…" : ex}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
-      <section className="cta-section cta-border" style={{ padding: "140px 32px" }}>
-        <div className="cta-bg" />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 700, margin: "0 auto" }}>
-          <div style={{ display: "inline-block", padding: "7px 22px", borderRadius: 40, border: "1px solid rgba(168,85,247,0.4)", background: "rgba(168,85,247,0.08)", marginBottom: 36 }}>
-            <span style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--purple)", textTransform: "uppercase" }}>Limited Spots Available</span>
+      {/* MARQUEE */}
+      <div style={{ overflow: "hidden", padding: "18px 0", borderTop: `1px solid ${t.navBorder}`, borderBottom: `1px solid ${t.navBorder}`, background: isDark ? "rgba(255,255,255,.01)" : "rgba(34,197,94,.02)", transition: "all .3s" }}>
+        <div className="marquee-track">
+          {[...SHOWCASE,...SHOWCASE,...SHOWCASE,...SHOWCASE].map((s, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 16px", borderRadius: 100, border: `1px solid ${s.color}26`, background: `${s.color}07`, whiteSpace: "nowrap" }}>
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: s.color, opacity: .65 }} />
+              <span style={{ fontSize: 12, color: t.textMuted, fontWeight: 500 }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FEATURES — 3D PREMIUM REDESIGN */}
+      <section style={{ maxWidth: 1100, margin: "0 auto", padding: "120px 24px 120px", perspective: "1200px" }}>
+        {/* Section header */}
+        <div style={{ marginBottom: 72, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 40, flexWrap: "wrap" }}>
+          <div>
+            <p style={{ fontSize: 10, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(34,197,94,.55)", marginBottom: 14, fontWeight: 600 }}>What you get</p>
+            <h2 style={{ fontSize: 48, fontWeight: 800, letterSpacing: "-.045em", color: t.featureTitle, lineHeight: 1.05 }}>
+              Built for<br />
+              <span style={{ background: "linear-gradient(135deg, #f1f4ff 40%, rgba(74,222,128,.7) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                production.
+              </span>
+            </h2>
           </div>
-          <h2 className="orbitron" style={{ fontSize: "clamp(32px, 5vw, 64px)", fontWeight: 900, lineHeight: 1.1, marginBottom: 24 }}>
-            Ready to Grow<br />Your <span className="grad-text">Business?</span>
-          </h2>
-          <p style={{ color: "var(--muted)", fontSize: 17, lineHeight: 1.75, marginBottom: 52, fontWeight: 400 }}>
-            Join 50+ businesses that chose NOVIX to build their digital presence, automate their growth, and convert more customers.
+          <p style={{ fontSize: 15, color: t.textMuted, lineHeight: 1.8, maxWidth: 320, fontWeight: 300 }}>
+            Every output ships with everything your site needs. Clean code, stunning design, zero compromise.
           </p>
-          <button className="btn-primary" style={{ padding: "18px 56px", fontSize: 16 }} onClick={() => scrollTo("contact")}>
-            Start Now — It's Free →
-          </button>
-          <p style={{ marginTop: 20, fontSize: 13, color: "rgba(226,232,240,0.25)" }}>No commitment required &middot; Response within 24 hours</p>
         </div>
-      </section>
 
-      {/* ── CONTACT ── */}
-      <section id="contact" style={{ padding: "120px 32px" }}>
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div className="badge" style={{ marginBottom: 20, background: "rgba(236,72,153,0.1)", borderColor: "rgba(236,72,153,0.3)", color: "var(--pink)" }}>
-              Get In Touch
+        {/* 3D Cards grid */}
+        <div className="feat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {FEATURES.map((f, i) => (
+            <div key={f.title} className="feat-card-3d" style={{ animation: `fadeUp .7s ${i * 0.08}s ease both` }}>
+              <div className="feat-card-3d-inner">
+                <div className="feat-card-3d-noise" />
+                <div className="feat-card-3d-glow" />
+
+                <div className="feat-number">{f.number}</div>
+
+                <div className="feat-stat-block">
+                  <span className="feat-stat-num">{f.stat}</span>
+                  <span className="feat-stat-label">{f.statLabel}</span>
+                </div>
+
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: t.featureTitle, marginBottom: 10, letterSpacing: "-.025em", lineHeight: 1.3 }}>{f.title}</h3>
+                <p style={{ fontSize: 13, color: t.textMuted, lineHeight: 1.75, fontWeight: 300 }}>{f.desc}</p>
+
+                <div className="feat-bottom-bar" />
+              </div>
             </div>
-            <h2 className="orbitron" style={{ fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, marginBottom: 16 }}>
-              Let's <span className="grad-text">Build Together</span>
-            </h2>
-            <p style={{ color: "var(--muted)", fontSize: 16 }}>
-              Tell us about your project. We'll get back to you within 24 hours.
-            </p>
-            <div className="divider" style={{ marginTop: 24 }} />
-          </div>
+          ))}
+        </div>
 
-          <div className="glass-card" style={{ padding: "48px 44px" }}>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>Your Name</label>
-                <input
-                  className="form-input" type="text" placeholder="Mohammed Al-Rashid" required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>Email Address</label>
-                <input
-                  className="form-input" type="email" placeholder="hello@yourbusiness.com" required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-              <div style={{ marginBottom: 32 }}>
-                <label style={{ fontSize: 13, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>Your Message</label>
-                <textarea
-                  className="form-input" placeholder="Tell us about your project, what you need, and your budget..." required
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                />
-              </div>
-              <button type="submit" className="btn-primary" style={{ width: "100%", padding: "16px", fontSize: 16, letterSpacing: "0.06em" }}>
-                {sent ? "✓ Request Sent! We'll be in touch soon." : "Send Request →"}
-              </button>
-            </form>
-          </div>
-
-          {/* Contact details */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 40, marginTop: 48, flexWrap: "wrap" }}>
-            {[["📧", "hello@novixconversions.com"], ["💬", "WhatsApp Available"], ["⚡", "24hr Response Time"]].map(([icon, txt]) => (
-              <div key={txt} style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--muted)", fontSize: 13 }}>
-                <span>{icon}</span> {txt}
-              </div>
-            ))}
-          </div>
+        {/* Bottom accent row */}
+        <div style={{ marginTop: 48, display: "flex", alignItems: "center", gap: 24, justifyContent: "center" }}>
+          <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, transparent, rgba(34,197,94,.2))" }} />
+          <span style={{ fontSize: 12, color: "rgba(34,197,94,.4)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase" }}>Everything in one file</span>
+          <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, rgba(34,197,94,.2), transparent)" }} />
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="footer-line" style={{ padding: "32px", maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <div className="orbitron grad-text" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "0.08em" }}>NOVIX</div>
-        <div style={{ fontSize: 13, color: "rgba(226,232,240,0.25)" }}>&copy; 2025 NOVIX Conversions. All rights reserved.</div>
-        <div style={{ display: "flex", gap: 24 }}>
-          {["Privacy", "Terms"].map((l) => (
-            <span key={l} style={{ fontSize: 13, color: "rgba(226,232,240,0.3)", cursor: "pointer", transition: "color 0.3s" }}
-              onMouseEnter={e => e.currentTarget.style.color = "var(--blue)"}
-              onMouseLeave={e => e.currentTarget.style.color = "rgba(226,232,240,0.3)"}>
-              {l}
-            </span>
+      {/* PRICING */}
+      <section id="pricing-section" style={{ maxWidth: 1040, margin: "0 auto", padding: "80px 24px 100px" }}>
+        <div style={{ textAlign: "center", marginBottom: 56 }}>
+          <p style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: t.textDim, marginBottom: 12 }}>Simple pricing</p>
+          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.03em", color: t.pricingTitle, marginBottom: 12 }}>Start free. Scale when ready.</h2>
+          <p style={{ fontSize: 15, color: t.textMuted, fontWeight: 300 }}>No credit card required to get started.</p>
+        </div>
+        <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, maxWidth: 860, margin: "0 auto" }}>
+          {PRICING.map(plan => (
+            <div key={plan.name} className="pricing-card"
+              style={{ background: plan.highlight ? "rgba(34,197,94,.06)" : t.surface, borderColor: plan.highlight ? "rgba(34,197,94,.5)" : t.surfaceBorder, boxShadow: plan.highlight ? "0 0 40px rgba(34,197,94,.12)" : "none" }}
+            >
+              {plan.highlight && (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 100, background: "rgba(34,197,94,.2)", border: "1px solid rgba(34,197,94,.35)", marginBottom: 16 }}>
+                  <span style={{ fontSize: 10, color: "#4ade80", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase" }}>Most Popular</span>
+                </div>
+              )}
+              <div style={{ marginBottom: 6 }}><span style={{ fontSize: 13, fontWeight: 600, color: plan.highlight ? "#4ade80" : t.textMuted }}>{plan.name}</span></div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 6 }}>
+                <span style={{ fontSize: 36, fontWeight: 700, color: t.pricingTitle, letterSpacing: "-.04em" }}>{plan.price}</span>
+                <span style={{ fontSize: 13, color: t.textMuted }}>{plan.period}</span>
+              </div>
+              <p style={{ fontSize: 12.5, color: t.textMuted, marginBottom: 20, lineHeight: 1.5 }}>{plan.desc}</p>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+                {plan.features.map(f => (
+                  <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+                    <span style={{ color: "#22c55e", fontSize: 13, flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <span style={{ fontSize: 13, color: t.textMuted, lineHeight: 1.5 }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button className={`pricing-cta ${plan.highlight ? "primary" : ""}`}
+                style={!plan.highlight ? { borderColor: t.surfaceBorder, background: t.surface, color: t.textMuted } : {}}
+                onMouseEnter={!plan.highlight ? e => { e.currentTarget.style.borderColor = "rgba(34,197,94,.4)"; e.currentTarget.style.color = "#4ade80"; e.currentTarget.style.background = "rgba(34,197,94,.08)"; } : undefined}
+                onMouseLeave={!plan.highlight ? e => { e.currentTarget.style.borderColor = t.surfaceBorder; e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = t.surface; } : undefined}
+                onClick={() => router.push("/builder")}
+              >{plan.cta}</button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ maxWidth: 600, margin: "0 auto", padding: "60px 24px 120px", textAlign: "center" }}>
+        <h2 style={{ fontSize: 38, fontWeight: 700, letterSpacing: "-.035em", color: t.ctaTitle, marginBottom: 16, lineHeight: 1.1 }}>Start building now.</h2>
+        <p style={{ fontSize: 16, color: t.textMuted, marginBottom: 32, fontWeight: 300 }}>No account needed. Describe your idea and get a full site.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 280, margin: "0 auto" }}>
+          <button className="build-btn" onClick={() => router.push("/builder")}>Build Instantly →</button>
+          <button className="agent-btn" onClick={() => router.push("/business")}>Use Quick Start</button>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: `1px solid ${t.footerBorder}`, padding: "24px 28px", display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 1160, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <EvixLogoSymbol size={30} />
+          <span className="evix-logo-text" style={{ fontSize: 17 }}>Evix</span>
+        </div>
+        <span style={{ fontSize: 11.5, color: t.textDim }}>© 2025 Evix. All rights reserved.</span>
+        <div style={{ display: "flex", gap: 20 }}>
+          {["Privacy", "Terms", "Status"].map(l => (
+            <span key={l} style={{ fontSize: 12, color: t.textDim, cursor: "pointer", transition: "color .2s" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#4ade80"}
+              onMouseLeave={e => e.currentTarget.style.color = t.textDim}
+            >{l}</span>
           ))}
         </div>
       </footer>
-    </>
+    </div>
   );
 }
