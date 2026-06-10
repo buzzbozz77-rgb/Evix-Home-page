@@ -85,22 +85,59 @@ const SHOWCASE = [
 
 const PRICING = [
   {
-    name: "Free", price: "$0", period: "forever",
-    desc: "Get started with 3 free builds",
-    features: ["3 website generations","Website & Landing Page builder","HTML download","Basic support"],
-    cta: "Start Free", highlight: false,
+    name: "Starter",
+    emoji: "🆓",
+    price: "$0",
+    period: "Forever",
+    desc: "Get started for free",
+    features: [
+      "1 Website Build",
+      "1 Landing Page",
+      "Mobile Responsive",
+      "Preview Mode",
+      "EVIX Branding",
+    ],
+    cta: "Start Free",
+    highlight: false,
+    yearlyNote: null,
   },
   {
-    name: "Pro", price: "$19", period: "/month",
+    name: "Pro",
+    emoji: "🚀",
+    price: "$39",
+    period: "/month",
     desc: "For creators & freelancers",
-    features: ["Unlimited generations","All build types (Website, Landing, Chatbot)","Priority generation speed","Advanced AI prompts","HTML + Code editor","Priority support"],
-    cta: "Get Pro", highlight: true,
+    features: [
+      "10 Website Builds / Month",
+      "25 Landing Pages / Month",
+      "Publish to Live URL",
+      "Custom Domains",
+      "Premium Components",
+      "AI Content Generation",
+      "Priority Support",
+    ],
+    cta: "Get Pro",
+    highlight: true,
+    yearlyNote: "$348/year · Save $120",
   },
   {
-    name: "Agency", price: "$49", period: "/month",
+    name: "Agency",
+    emoji: "👑",
+    price: "$149",
+    period: "/month",
     desc: "For teams & agencies",
-    features: ["Everything in Pro","Team workspace (5 seats)","White-label exports","Custom AI instructions","API access","Dedicated support"],
-    cta: "Get Agency", highlight: false,
+    features: [
+      "Unlimited Website Builds",
+      "Unlimited Landing Pages",
+      "Unlimited Publishing",
+      "Team Workspace (5 Seats)",
+      "White Label Solution",
+      "API Access",
+      "Dedicated Support",
+    ],
+    cta: "Get Agency",
+    highlight: false,
+    yearlyNote: "$1,428/year · Save $360",
   },
 ];
 
@@ -118,7 +155,6 @@ const QUICK_START_TYPES = [
   { id: "ecommerce", label: "Store", desc: "E-commerce store with payments" },
 ];
 
-// ── CAREERS MODAL ─────────────────────────────────────────────────────────────
 const CAREER_POSITIONS = [
   { id: "frontend", label: "Frontend Engineer", dept: "Engineering", type: "Full-time · Remote" },
   { id: "ai", label: "AI/ML Engineer", dept: "Engineering", type: "Full-time · Remote" },
@@ -161,7 +197,6 @@ function CareersModal({ onClose }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div style={{ background: "#000000", border: "1px solid rgba(34,197,94,.25)", borderRadius: 20, width: "100%", maxWidth: 580, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 100px rgba(0,0,0,.9)", animation: "modalIn .25s ease" }}>
-        {/* Header */}
         <div style={{ padding: "28px 28px 20px", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, color: "#f1f4ff", letterSpacing: "-.025em", marginBottom: 6 }}>Join the Evix Team</h2>
@@ -179,7 +214,6 @@ function CareersModal({ onClose }) {
             <button onClick={onClose} style={{ padding: "11px 28px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Close</button>
           </div>
         ) : !selectedPosition ? (
-          /* Position List */
           <div style={{ padding: "20px 28px 28px" }}>
             <p style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(226,232,248,.25)", marginBottom: 16 }}>Open Positions</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -212,15 +246,12 @@ function CareersModal({ onClose }) {
             </div>
           </div>
         ) : (
-          /* Application Form */
           <div style={{ padding: "20px 28px 28px" }}>
             <button onClick={() => setSelectedPosition(null)} style={{ background: "transparent", border: "none", color: "rgba(226,232,248,.4)", fontSize: 13, cursor: "pointer", fontFamily: "Inter,sans-serif", marginBottom: 20, display: "flex", alignItems: "center", gap: 5 }}>← Back to positions</button>
-
             <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(34,197,94,.08)", border: "1px solid rgba(34,197,94,.2)", marginBottom: 22 }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: "#4ade80" }}>{selectedPosition.label}</p>
               <p style={{ fontSize: 11.5, color: "rgba(74,222,128,.5)", marginTop: 2 }}>{selectedPosition.dept} · {selectedPosition.type}</p>
             </div>
-
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {[
                 { key: "name", label: "Full Name", placeholder: "Your full name", required: true, type: "text" },
@@ -244,7 +275,6 @@ function CareersModal({ onClose }) {
                   />
                 </div>
               ))}
-
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(226,232,248,.45)", marginBottom: 6 }}>
                   Why do you want to join Evix? <span style={{ color: "#f87171" }}>*</span>
@@ -259,19 +289,11 @@ function CareersModal({ onClose }) {
                   onBlur={e => e.target.style.borderColor = "rgba(255,255,255,.08)"}
                 />
               </div>
-
-              {/* CV Upload */}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(226,232,248,.45)", marginBottom: 6 }}>
                   Upload Your CV <span style={{ color: "#f87171" }}>*</span>
                 </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  style={{ display: "none" }}
-                />
+                <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} style={{ display: "none" }} />
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   style={{ padding: "20px", borderRadius: 10, border: `2px dashed ${cvName ? "rgba(34,197,94,.55)" : "rgba(255,255,255,.1)"}`, background: cvName ? "rgba(34,197,94,.06)" : "rgba(255,255,255,.02)", cursor: "pointer", textAlign: "center", transition: "all .2s" }}
@@ -294,16 +316,13 @@ function CareersModal({ onClose }) {
                 </div>
               </div>
             </div>
-
             <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
               <button onClick={() => setSelectedPosition(null)} style={{ flex: 1, padding: 12, borderRadius: 9, border: "1px solid rgba(255,255,255,.07)", background: "transparent", color: "rgba(226,232,248,.4)", fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "Inter,sans-serif" }}>Cancel</button>
               <button
                 onClick={handleSubmit}
                 disabled={!isFormValid}
                 style={{ flex: 2, padding: 12, borderRadius: 9, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 13.5, fontWeight: 600, cursor: isFormValid ? "pointer" : "not-allowed", fontFamily: "Inter,sans-serif", opacity: isFormValid ? 1 : 0.35, transition: "opacity .2s" }}
-              >
-                Submit Application →
-              </button>
+              >Submit Application →</button>
             </div>
           </div>
         )}
@@ -312,7 +331,6 @@ function CareersModal({ onClose }) {
   );
 }
 
-// ── QUICK START DROPDOWN ──────────────────────────────────────────────────────
 function QuickStartDropdown({ isDark, t, onSelect, onClose }) {
   return (
     <div
@@ -339,19 +357,12 @@ function QuickStartDropdown({ isDark, t, onSelect, onClose }) {
   );
 }
 
-// ── LOGO COMPONENTS ──────────────────────────────────────────────────────────
 function EvixLogoFull({ height = 140, spinning = false }) {
   return (
     <img
       src="/LOGOSS.png"
       alt="Evix"
-      style={{
-        height,
-        width: "auto",
-        display: "block",
-        maxWidth: "100%",
-        animation: spinning ? "logoSpin 8s linear infinite" : undefined,
-      }}
+      style={{ height, width: "auto", display: "block", maxWidth: "100%", animation: spinning ? "logoSpin 8s linear infinite" : undefined }}
     />
   );
 }
@@ -361,62 +372,18 @@ function EvixLogoSymbol({ size = 70 }) {
     <img
       src="/LOGOSS.png"
       alt="Evix"
-      style={{
-        height: size,
-        width: size,
-        display: "block",
-        maxWidth: size * 1.1,
-        objectFit: "contain",
-        objectPosition: "left center",
-      }}
+      style={{ height: size, width: size, display: "block", maxWidth: size * 1.1, objectFit: "contain", objectPosition: "left center" }}
     />
   );
 }
 
-// ── FEATURES DATA ─────────────────────────────────────────────────────────────
 const FEATURES = [
-  {
-    number: "01",
-    title: "Complete HTML/CSS/JS",
-    desc: "Full single-file output with clean, semantic structure. Animations, components, and responsive layout included.",
-    stat: "100%",
-    statLabel: "single file",
-  },
-  {
-    number: "02",
-    title: "World-class Design",
-    desc: "Modern UI patterns with glassmorphism, gradients, smooth transitions, and Google Fonts — pixel-perfect.",
-    stat: "50+",
-    statLabel: "components",
-  },
-  {
-    number: "03",
-    title: "AI Chatbot Engine",
-    desc: "Real chatbot widgets powered by live AI. Contextual responses and beautiful chat UI out of the box.",
-    stat: "Live",
-    statLabel: "responses",
-  },
-  {
-    number: "04",
-    title: "One-click Download",
-    desc: "Your entire site in a single HTML file. Host anywhere. No dependencies, no build step needed.",
-    stat: "0",
-    statLabel: "dependencies",
-  },
-  {
-    number: "05",
-    title: "Live Preview",
-    desc: "See your site render instantly in the split editor. Edit code live and watch changes update in real time.",
-    stat: "<1s",
-    statLabel: "render time",
-  },
-  {
-    number: "06",
-    title: "Multiple Build Types",
-    desc: "Websites, landing pages, AI chatbots — each with specialized prompts tuned for the best output.",
-    stat: "3",
-    statLabel: "build modes",
-  },
+  { number: "01", title: "Complete HTML/CSS/JS", desc: "Full single-file output with clean, semantic structure. Animations, components, and responsive layout included.", stat: "100%", statLabel: "single file" },
+  { number: "02", title: "World-class Design", desc: "Modern UI patterns with glassmorphism, gradients, smooth transitions, and Google Fonts — pixel-perfect.", stat: "50+", statLabel: "components" },
+  { number: "03", title: "AI Chatbot Engine", desc: "Real chatbot widgets powered by live AI. Contextual responses and beautiful chat UI out of the box.", stat: "Live", statLabel: "responses" },
+  { number: "04", title: "One-click Download", desc: "Your entire site in a single HTML file. Host anywhere. No dependencies, no build step needed.", stat: "0", statLabel: "dependencies" },
+  { number: "05", title: "Live Preview", desc: "See your site render instantly in the split editor. Edit code live and watch changes update in real time.", stat: "<1s", statLabel: "render time" },
+  { number: "06", title: "Multiple Build Types", desc: "Websites, landing pages, AI chatbots — each with specialized prompts tuned for the best output.", stat: "3", statLabel: "build modes" },
 ];
 
 export default function Home() {
@@ -432,6 +399,7 @@ export default function Home() {
   const [showCareersModal, setShowCareersModal] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({ name: "", email: "", message: "" });
   const [inquirySent, setInquirySent] = useState(false);
+  const [billingYearly, setBillingYearly] = useState(false);
 
   const [mode, setMode] = useState("quick");
   const [proStep, setProStep] = useState(0);
@@ -511,11 +479,7 @@ export default function Home() {
     }
   };
 
-  const resetPro = () => {
-    setProStep(0);
-    setProAnswers({});
-    setProComplete(false);
-  };
+  const resetPro = () => { setProStep(0); setProAnswers({}); setProComplete(false); };
 
   const handleInquirySubmit = () => {
     if (!inquiryForm.name.trim() || !inquiryForm.email.trim() || !inquiryForm.message.trim()) return;
@@ -527,17 +491,13 @@ export default function Home() {
     }, 2500);
   };
 
-  const handleQuickStart = (typeId) => {
-    router.push(`/business?type=${typeId}`);
-  };
+  const handleQuickStart = (typeId) => { router.push(`/business?type=${typeId}`); };
 
   const currentExamples = EXAMPLES[activeType] || EXAMPLES.website;
   const currentQuestion = SMART_QUESTIONS[proStep];
 
   const t = isDark ? {
-    bg: "#000000",
-    nav: "rgba(0,0,0,.94)",
-    navBorder: "rgba(255,255,255,.05)",
+    bg: "#000000", nav: "rgba(0,0,0,.94)", navBorder: "rgba(255,255,255,.05)",
     text: "#e2e8f8", textMuted: "rgba(226,232,248,.4)", textDim: "rgba(226,232,248,.18)",
     surface: "rgba(255,255,255,.022)", surfaceBorder: "rgba(255,255,255,.055)",
     inputBg: "rgba(255,255,255,.035)", inputBorder: "rgba(255,255,255,.09)",
@@ -558,9 +518,7 @@ export default function Home() {
         @font-face {
           font-family: 'Casa';
           src: url('/fonts/Casa-Regular.otf') format('opentype');
-          font-weight: 400;
-          font-style: normal;
-          font-display: swap;
+          font-weight: 400; font-style: normal; font-display: swap;
         }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -582,12 +540,9 @@ export default function Home() {
 
         .evix-logo-text {
           font-family: 'Casa', 'Bebas Neue', sans-serif !important;
-          font-size: 22px;
-          letter-spacing: .06em;
+          font-size: 22px; letter-spacing: .06em;
           background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
 
         .nav-trigger { display: flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: color .18s, background .18s; padding: 6px 10px; border-radius: 6px; border: none; background: transparent; font-family: 'Inter', sans-serif; }
@@ -629,106 +584,42 @@ export default function Home() {
         .inquiry-input { width: 100%; padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.035); color: #e2e8f8; font-size: 14px; font-family: 'Inter',sans-serif; outline: none; transition: border-color .2s; }
         .inquiry-input:focus { border-color: rgba(34,197,94,.5); box-shadow: 0 0 0 3px rgba(34,197,94,.08); }
         .inquiry-input::placeholder { color: rgba(226,232,248,.2); }
+        .billing-toggle { display: flex; align-items: center; gap: 3px; padding: 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); }
+        .billing-toggle-btn { padding: 7px 18px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .2s; font-family: 'Inter',sans-serif; border: none; }
 
-        /* ── 3D FEATURE CARD STYLES ── */
-        .feat-card-3d {
-          position: relative;
-          border-radius: 16px;
-          padding: 0;
-          cursor: default;
-          transition: transform .35s cubic-bezier(.22,.68,0,1.2), box-shadow .35s ease;
-          transform-style: preserve-3d;
-          perspective: 800px;
-        }
-        .feat-card-3d:hover {
-          transform: translateY(-8px) rotateX(3deg) rotateY(-1deg) scale(1.02);
-        }
-        .feat-card-3d-inner {
-          position: relative;
-          border-radius: 16px;
-          padding: 28px 26px 24px;
-          height: 100%;
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,.07);
-          background: linear-gradient(145deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.015) 100%);
-          transition: border-color .3s, box-shadow .3s;
-        }
-        .feat-card-3d:hover .feat-card-3d-inner {
-          border-color: rgba(34,197,94,.35);
-          box-shadow: 0 0 0 1px rgba(34,197,94,.1), 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        .feat-card-3d-glow {
-          position: absolute;
-          inset: -1px;
-          border-radius: 17px;
-          background: radial-gradient(ellipse at 30% 20%, rgba(34,197,94,.12) 0%, transparent 60%);
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity .3s;
-        }
+        /* 3D FEATURE CARD STYLES */
+        .feat-card-3d { position: relative; border-radius: 16px; padding: 0; cursor: default; transition: transform .35s cubic-bezier(.22,.68,0,1.2), box-shadow .35s ease; transform-style: preserve-3d; perspective: 800px; }
+        .feat-card-3d:hover { transform: translateY(-8px) rotateX(3deg) rotateY(-1deg) scale(1.02); }
+        .feat-card-3d-inner { position: relative; border-radius: 16px; padding: 28px 26px 24px; height: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,.07); background: linear-gradient(145deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.015) 100%); transition: border-color .3s, box-shadow .3s; }
+        .feat-card-3d:hover .feat-card-3d-inner { border-color: rgba(34,197,94,.35); box-shadow: 0 0 0 1px rgba(34,197,94,.1), 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08); }
+        .feat-card-3d-glow { position: absolute; inset: -1px; border-radius: 17px; background: radial-gradient(ellipse at 30% 20%, rgba(34,197,94,.12) 0%, transparent 60%); pointer-events: none; opacity: 0; transition: opacity .3s; }
         .feat-card-3d:hover .feat-card-3d-glow { opacity: 1; }
-        .feat-card-3d-noise {
-          position: absolute;
-          inset: 0;
-          border-radius: 16px;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-          opacity: .4;
-          pointer-events: none;
-        }
-        .feat-number {
-          font-size: 10px;
-          letter-spacing: .2em;
-          text-transform: uppercase;
-          font-weight: 700;
-          color: rgba(34,197,94,.5);
-          margin-bottom: 16px;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .feat-number::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: linear-gradient(90deg, rgba(34,197,94,.3), transparent);
-          max-width: 40px;
-        }
-        .feat-stat-block {
-          margin-bottom: 16px;
-          display: flex;
-          align-items: baseline;
-          gap: 6px;
-        }
-        .feat-stat-num {
-          font-size: 38px;
-          font-weight: 800;
-          letter-spacing: -.04em;
-          line-height: 1;
-          background: linear-gradient(135deg, #f1f4ff 30%, rgba(74,222,128,.85) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .feat-stat-label {
-          font-size: 11px;
-          color: rgba(226,232,248,.3);
-          font-weight: 500;
-          letter-spacing: .04em;
-        }
-        .feat-bottom-bar {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(34,197,94,.5), transparent);
-          border-radius: 0 0 16px 16px;
-          opacity: 0;
-          transition: opacity .3s;
-        }
+        .feat-card-3d-noise { position: absolute; inset: 0; border-radius: 16px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"); opacity: .4; pointer-events: none; }
+        .feat-number { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; color: rgba(34,197,94,.5); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .feat-number::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(34,197,94,.3), transparent); max-width: 40px; }
+        .feat-stat-block { margin-bottom: 16px; display: flex; align-items: baseline; gap: 6px; }
+        .feat-stat-num { font-size: 38px; font-weight: 800; letter-spacing: -.04em; line-height: 1; background: linear-gradient(135deg, #f1f4ff 30%, rgba(74,222,128,.85) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .feat-stat-label { font-size: 11px; color: rgba(226,232,248,.3); font-weight: 500; letter-spacing: .04em; }
+        .feat-bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(34,197,94,.5), transparent); border-radius: 0 0 16px 16px; opacity: 0; transition: opacity .3s; }
         .feat-card-3d:hover .feat-bottom-bar { opacity: 1; }
 
-        @media (max-width: 640px) { .hero-title { font-size: 34px !important; white-space: normal !important; } .type-btns { flex-wrap: wrap; } .nav-mid { display: none !important; } .pricing-grid { grid-template-columns: 1fr !important; } .feat-grid { grid-template-columns: 1fr !important; } }
+        /* LOGIN BUTTON — mobile responsive */
+        .login-btn { background: transparent; border: none; color: var(--text-muted); font-size: 13.5px; font-weight: 500; cursor: pointer; font-family: 'Inter',sans-serif; padding: 6px 12px; border-radius: 7px; transition: color .18s; white-space: nowrap; }
+
+        @media (max-width: 768px) {
+          .hero-title { font-size: 34px !important; white-space: normal !important; }
+          .type-btns { flex-wrap: wrap; }
+          .nav-mid { display: none !important; }
+          .pricing-grid { grid-template-columns: 1fr !important; }
+          .feat-grid { grid-template-columns: 1fr !important; }
+          .nav-right-actions { gap: 4px !important; }
+          .login-btn { font-size: 12px !important; padding: 6px 8px !important; }
+          .start-building-btn { font-size: 12px !important; padding: 7px 12px !important; }
+          .theme-toggle { width: 30px !important; height: 30px !important; font-size: 14px !important; }
+        }
+        @media (max-width: 400px) {
+          .login-btn { display: none !important; }
+        }
       `}</style>
 
       {/* INQUIRY MODAL */}
@@ -806,14 +697,12 @@ export default function Home() {
               )}
             </div>
 
-            {/* Pricing */}
             <button className="nav-trigger" style={{ color: t.textMuted }}
               onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)"; }}
               onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
               onClick={() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" })}
             >Pricing</button>
 
-            {/* Quick Start — replaces AI Business */}
             <div style={{ position: "relative" }}>
               <button className={`biz-nav-btn ${openMenu === "quickstart" ? "open" : ""}`} onClick={() => setOpenMenu(openMenu === "quickstart" ? null : "quickstart")}>
                 Quick Start
@@ -824,14 +713,12 @@ export default function Home() {
               )}
             </div>
 
-            {/* Partnership */}
             <button className="nav-trigger" style={{ color: t.textMuted }}
               onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)"; }}
               onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
               onClick={() => setShowInquiryModal(true)}
             >Partnership</button>
 
-            {/* Careers */}
             <button className="nav-trigger" style={{ color: t.textMuted }}
               onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(34,197,94,.07)"; }}
               onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.background = "transparent"; }}
@@ -839,16 +726,21 @@ export default function Home() {
             >Careers</button>
           </div>
 
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {/* NAV RIGHT — mobile friendly */}
+          <div className="nav-right-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <button className="theme-toggle" style={{ borderColor: isDark ? "rgba(255,255,255,.1)" : "rgba(34,197,94,.2)", color: isDark ? "#4ade80" : "#16a34a" }} onClick={() => setIsDark(!isDark)} title={isDark ? "Light Mode" : "Dark Mode"}>
               {isDark ? "☀" : "◑"}
             </button>
-            <button style={{ background: "transparent", border: "none", color: t.textMuted, fontSize: 13.5, fontWeight: 500, cursor: "pointer", fontFamily: "'Inter',sans-serif", padding: "6px 12px", borderRadius: 7, transition: "color .18s" }}
+            <button
+              className="login-btn"
+              style={{ color: t.textMuted }}
               onMouseEnter={e => e.currentTarget.style.color = t.text}
               onMouseLeave={e => e.currentTarget.style.color = t.textMuted}
             >Log in</button>
-            <button onClick={() => router.push("/builder")}
-              style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all .2s", boxShadow: "0 0 12px rgba(34,197,94,.3)" }}
+            <button
+              className="start-building-btn"
+              onClick={() => router.push("/builder")}
+              style={{ padding: "8px 18px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#16a34a,#22c55e)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Inter',sans-serif", transition: "all .2s", boxShadow: "0 0 12px rgba(34,197,94,.3)", whiteSpace: "nowrap" }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 0 22px rgba(34,197,94,.55)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 0 12px rgba(34,197,94,.3)"; e.currentTarget.style.transform = "translateY(0)"; }}
             >Start Building →</button>
@@ -883,7 +775,6 @@ export default function Home() {
             Describe your idea. Get a complete, production-ready website, landing page, or AI chatbot.
           </p>
 
-          {/* Build type */}
           <div className="type-btns" style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20, animation: "fadeUp .9s .18s ease both" }}>
             {BUILD_TYPES.map(tp => (
               <button key={tp.id} className="type-btn"
@@ -895,7 +786,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Mode Toggle */}
           <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 20, animation: "fadeUp .9s .2s ease both" }}>
             <button className="mode-toggle-btn"
               style={{ borderColor: mode === "quick" ? "rgba(34,197,94,.55)" : (isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.15)"), color: mode === "quick" ? "#4ade80" : t.textMuted, background: mode === "quick" ? "rgba(34,197,94,.1)" : "transparent" }}
@@ -907,7 +797,6 @@ export default function Home() {
             >Use AI Setup</button>
           </div>
 
-          {/* PRO MODE FLOW */}
           {mode === "pro" && !proComplete && (
             <div style={{ animation: "stepIn .3s ease", marginBottom: 20, background: isDark ? "rgba(255,255,255,.025)" : "rgba(34,197,94,.04)", border: `1px solid ${isDark ? "rgba(255,255,255,.07)" : "rgba(34,197,94,.12)"}`, borderRadius: 14, padding: "22px 20px" }}>
               <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 18 }}>
@@ -935,7 +824,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* PRO COMPLETE SUMMARY */}
           {mode === "pro" && proComplete && (
             <div style={{ animation: "stepIn .3s ease", marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
               {Object.entries(proAnswers).map(([key, val]) => (
@@ -947,7 +835,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* TEXTAREA */}
           {(mode === "quick" || proComplete) && (
             <div style={{ animation: "fadeUp .9s .22s ease both", marginBottom: 16 }}>
               <div className="textarea-wrap">
@@ -966,8 +853,6 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-
-              {/* Use Quick Start CTA */}
               <div style={{ marginTop: 12 }}>
                 <button className="agent-btn" onClick={() => router.push("/business")}>
                   Use Quick Start
@@ -1013,9 +898,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FEATURES — 3D PREMIUM REDESIGN */}
+      {/* FEATURES */}
       <section style={{ maxWidth: 1100, margin: "0 auto", padding: "120px 24px 120px", perspective: "1200px" }}>
-        {/* Section header */}
         <div style={{ marginBottom: 72, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 40, flexWrap: "wrap" }}>
           <div>
             <p style={{ fontSize: 10, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(34,197,94,.55)", marginBottom: 14, fontWeight: 600 }}>What you get</p>
@@ -1031,31 +915,25 @@ export default function Home() {
           </p>
         </div>
 
-        {/* 3D Cards grid */}
         <div className="feat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
           {FEATURES.map((f, i) => (
             <div key={f.title} className="feat-card-3d" style={{ animation: `fadeUp .7s ${i * 0.08}s ease both` }}>
               <div className="feat-card-3d-inner">
                 <div className="feat-card-3d-noise" />
                 <div className="feat-card-3d-glow" />
-
                 <div className="feat-number">{f.number}</div>
-
                 <div className="feat-stat-block">
                   <span className="feat-stat-num">{f.stat}</span>
                   <span className="feat-stat-label">{f.statLabel}</span>
                 </div>
-
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: t.featureTitle, marginBottom: 10, letterSpacing: "-.025em", lineHeight: 1.3 }}>{f.title}</h3>
                 <p style={{ fontSize: 13, color: t.textMuted, lineHeight: 1.75, fontWeight: 300 }}>{f.desc}</p>
-
                 <div className="feat-bottom-bar" />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Bottom accent row */}
         <div style={{ marginTop: 48, display: "flex", alignItems: "center", gap: 24, justifyContent: "center" }}>
           <div style={{ height: 1, flex: 1, background: "linear-gradient(90deg, transparent, rgba(34,197,94,.2))" }} />
           <span style={{ fontSize: 12, color: "rgba(34,197,94,.4)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase" }}>Everything in one file</span>
@@ -1065,27 +943,65 @@ export default function Home() {
 
       {/* PRICING */}
       <section id="pricing-section" style={{ maxWidth: 1040, margin: "0 auto", padding: "80px 24px 100px" }}>
-        <div style={{ textAlign: "center", marginBottom: 56 }}>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
           <p style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: t.textDim, marginBottom: 12 }}>Simple pricing</p>
           <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.03em", color: t.pricingTitle, marginBottom: 12 }}>Start free. Scale when ready.</h2>
-          <p style={{ fontSize: 15, color: t.textMuted, fontWeight: 300 }}>No credit card required to get started.</p>
+          <p style={{ fontSize: 15, color: t.textMuted, fontWeight: 300, marginBottom: 28 }}>No credit card required to get started.</p>
+
+          {/* Billing Toggle */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+            <span style={{ fontSize: 13, color: !billingYearly ? "#4ade80" : t.textMuted, fontWeight: !billingYearly ? 600 : 400, transition: "all .2s" }}>Monthly</span>
+            <div
+              onClick={() => setBillingYearly(!billingYearly)}
+              style={{ width: 46, height: 26, borderRadius: 13, background: billingYearly ? "rgba(34,197,94,.4)" : "rgba(255,255,255,.1)", border: "1px solid rgba(34,197,94,.3)", cursor: "pointer", position: "relative", transition: "background .25s" }}
+            >
+              <div style={{ position: "absolute", top: 3, left: billingYearly ? 22 : 3, width: 18, height: 18, borderRadius: "50%", background: billingYearly ? "#22c55e" : "rgba(255,255,255,.4)", transition: "left .25s, background .25s" }} />
+            </div>
+            <span style={{ fontSize: 13, color: billingYearly ? "#4ade80" : t.textMuted, fontWeight: billingYearly ? 600 : 400, transition: "all .2s" }}>
+              Yearly
+              <span style={{ marginLeft: 6, padding: "2px 7px", borderRadius: 100, background: "rgba(34,197,94,.15)", border: "1px solid rgba(34,197,94,.3)", fontSize: 10, color: "#4ade80", fontWeight: 700 }}>Save up to $360</span>
+            </span>
+          </div>
         </div>
-        <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, maxWidth: 860, margin: "0 auto" }}>
+
+        <div className="pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, maxWidth: 900, margin: "0 auto" }}>
           {PRICING.map(plan => (
             <div key={plan.name} className="pricing-card"
-              style={{ background: plan.highlight ? "rgba(34,197,94,.06)" : t.surface, borderColor: plan.highlight ? "rgba(34,197,94,.5)" : t.surfaceBorder, boxShadow: plan.highlight ? "0 0 40px rgba(34,197,94,.12)" : "none" }}
+              style={{ background: plan.highlight ? "rgba(34,197,94,.06)" : t.surface, borderColor: plan.highlight ? "rgba(34,197,94,.5)" : t.surfaceBorder, boxShadow: plan.highlight ? "0 0 40px rgba(34,197,94,.12)" : "none", position: "relative" }}
             >
               {plan.highlight && (
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 100, background: "rgba(34,197,94,.2)", border: "1px solid rgba(34,197,94,.35)", marginBottom: 16 }}>
-                  <span style={{ fontSize: 10, color: "#4ade80", fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase" }}>Most Popular</span>
+                <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 12px", borderRadius: 100, background: "linear-gradient(135deg,#16a34a,#22c55e)", border: "none", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 10, color: "#fff", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>Most Popular</span>
                 </div>
               )}
-              <div style={{ marginBottom: 6 }}><span style={{ fontSize: 13, fontWeight: 600, color: plan.highlight ? "#4ade80" : t.textMuted }}>{plan.name}</span></div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 6 }}>
-                <span style={{ fontSize: 36, fontWeight: 700, color: t.pricingTitle, letterSpacing: "-.04em" }}>{plan.price}</span>
+
+              {/* Plan header */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 18 }}>{plan.emoji}</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: plan.highlight ? "#4ade80" : t.text }}>{plan.name}</span>
+              </div>
+
+              {/* Price */}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 4 }}>
+                <span style={{ fontSize: 38, fontWeight: 800, color: t.pricingTitle, letterSpacing: "-.04em" }}>{plan.price}</span>
                 <span style={{ fontSize: 13, color: t.textMuted }}>{plan.period}</span>
               </div>
+
+              {/* Yearly note */}
+              {billingYearly && plan.yearlyNote && (
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontSize: 11.5, color: "#4ade80", background: "rgba(34,197,94,.1)", border: "1px solid rgba(34,197,94,.2)", borderRadius: 6, padding: "2px 8px", fontWeight: 600 }}>
+                    {plan.yearlyNote}
+                  </span>
+                </div>
+              )}
+
               <p style={{ fontSize: 12.5, color: t.textMuted, marginBottom: 20, lineHeight: 1.5 }}>{plan.desc}</p>
+
+              {/* Divider */}
+              <div style={{ height: 1, background: plan.highlight ? "rgba(34,197,94,.2)" : "rgba(255,255,255,.06)", marginBottom: 16 }} />
+
+              {/* Features */}
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
                 {plan.features.map(f => (
                   <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
@@ -1094,6 +1010,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
+
               <button className={`pricing-cta ${plan.highlight ? "primary" : ""}`}
                 style={!plan.highlight ? { borderColor: t.surfaceBorder, background: t.surface, color: t.textMuted } : {}}
                 onMouseEnter={!plan.highlight ? e => { e.currentTarget.style.borderColor = "rgba(34,197,94,.4)"; e.currentTarget.style.color = "#4ade80"; e.currentTarget.style.background = "rgba(34,197,94,.08)"; } : undefined}

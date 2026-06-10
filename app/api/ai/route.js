@@ -1,26 +1,31 @@
 // app/api/ai/route.js
-// ── Groq API Integration (FREE TIER) ──────────────────────────────────────────
+// ── Groq API Integration ───────────────────────────────────────────────────────
 export async function POST(request) {
   try {
     let body;
     try {
       body = await request.json();
     } catch {
-      return Response.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return Response.json({ error: "Something went wrong. Please try again." }, { status: 400 });
     }
 
     const { prompt, type = "website" } = body;
 
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
-      return Response.json({ error: "Prompt is required" }, { status: 400 });
+      return Response.json({ error: "Something went wrong. Please try again." }, { status: 400 });
     }
 
-    // ── تغيير 1: متغير البيئة للـ Groq ───────────────────────────────────────
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      return Response.json({ error: "API key not configured. Please check your environment variables." }, { status: 500 });
+      return Response.json({ error: "Something went wrong. Please try again." }, { status: 500 });
     }
 
+    // ── Detect language of the prompt ─────────────────────────────────────────
+    const arabicPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
+    const isArabic = arabicPattern.test(prompt);
+    const lang = isArabic ? "ar" : "en";
+
+    // ── Quality Enforcement (bilingual) ───────────────────────────────────────
     const QUALITY_ENFORCEMENT = `
 ══════════════════════════════════════════════════════════
  ABSOLUTE QUALITY MANDATE — READ BEFORE WRITING ONE LINE
@@ -29,6 +34,12 @@ export async function POST(request) {
 You are generating a website that must look indistinguishable from a
 $15,000 professionally designed project. The bar is Stripe, Apple,
 Linear, Loom, Notion. Every pixel must earn its place.
+
+LANGUAGE INSTRUCTION:
+${lang === "ar"
+  ? `The user's prompt is in Arabic. You MUST generate ALL website content (headings, body copy, navigation, buttons, labels, testimonials, FAQs, footer, etc.) entirely in Arabic. Set <html lang="ar" dir="rtl"> and use RTL layout throughout. Choose Arabic-compatible Google Fonts: "Tajawal" for body and "Cairo" or "Noto Kufi Arabic" for headings. Ensure all text flows right-to-left. All spacing, alignment, flex/grid directions must be mirrored for RTL. Never mix languages unless the brand name itself is in English.`
+  : `The user's prompt is in English. Generate ALL website content in English. Set <html lang="en" dir="ltr">.`
+}
 
 STYLE DNA INSTRUCTION: If the prompt starts with [STYLE DNA: ...], extract the style description
 and apply it as the dominant visual language throughout the entire site. Every color, font,
@@ -41,41 +52,47 @@ The logo must be prominent and correctly sized (max-height: 60px in nav, larger 
 ──────────────────────────────────────────────────────────
 OUTPUT RULES (NON-NEGOTIABLE)
 ──────────────────────────────────────────────────────────
-• Output ONLY raw HTML starting with <!DOCTYPE html>
-• Zero markdown, zero explanations, zero code fences
-• All CSS inside <style>, all JS inside <script>
-• File must be 100% self-contained and immediately renderable
-• MINIMUM OUTPUT: 500+ LINES OF CODE — this is a hard floor, not a suggestion
-• Target 600–900 lines for websites, 500–700 for landing pages
-• Every section must be fully fleshed out — no placeholders, no "TODO" comments
-• Every component must have real content, real copy, real details
+- Output ONLY raw HTML starting with <!DOCTYPE html>
+- Zero markdown, zero explanations, zero code fences
+- All CSS inside <style>, all JS inside <script>
+- File must be 100% self-contained and immediately renderable
+- MINIMUM OUTPUT: 500+ LINES OF CODE — this is a hard floor, not a suggestion
+- Target 600–900 lines for websites, 500–700 for landing pages
+- Every section must be fully fleshed out — no placeholders, no "TODO" comments
+- Every component must have real content, real copy, real details
 
 ──────────────────────────────────────────────────────────
 DESIGN SYSTEM
 ──────────────────────────────────────────────────────────
-• Define all design tokens as CSS variables at :root level:
+- Define all design tokens as CSS variables at :root level:
   --color-bg, --color-surface, --color-surface-2,
   --color-border, --color-text, --color-text-muted,
   --color-accent, --color-accent-2, --color-accent-3,
   --radius-sm, --radius-md, --radius-lg, --radius-xl,
   --shadow-sm, --shadow-md, --shadow-lg, --shadow-glow,
   --transition-fast, --transition-base, --transition-slow
-• Use a distinctive, modern color palette — NOT generic blue/white
-• Glassmorphism: backdrop-filter: blur() + semi-transparent surfaces
-• Layered shadows for depth (box-shadow with multiple layers)
-• Consistent 8px spacing grid throughout
+- Use a distinctive, modern color palette — NOT generic blue/white
+- Glassmorphism: backdrop-filter: blur() + semi-transparent surfaces
+- Layered shadows for depth (box-shadow with multiple layers)
+- Consistent 8px spacing grid throughout
 
 ──────────────────────────────────────────────────────────
 TYPOGRAPHY — PREMIUM REQUIRED
 ──────────────────────────────────────────────────────────
-Import 2 fonts from Google Fonts (use @import in <style>):
-• Display font (for headings): choose from:
+${lang === "ar"
+  ? `Import Arabic Google Fonts via @import in <style>:
+- Display/Heading font: "Cairo" or "Noto Kufi Arabic"
+- Body font: "Tajawal" or "Almarai"
+These fonts must be loaded correctly and applied throughout.`
+  : `Import 2 fonts from Google Fonts (use @import in <style>):
+- Display font (for headings): choose from:
   Syne, Outfit, Plus Jakarta Sans, Bricolage Grotesque,
   Cabinet Grotesk, Fraunces, Playfair Display, Clash Display
-• Body font (for paragraphs/UI): choose from:
+- Body font (for paragraphs/UI): choose from:
   DM Sans, Satoshi, Manrope, General Sans, Work Sans
 
-FORBIDDEN fonts: Arial, Roboto, Inter, system-ui, sans-serif (generic)
+FORBIDDEN fonts: Arial, Roboto, Inter, system-ui, sans-serif (generic)`
+}
 
 Type scale (px, strictly followed):
   --fs-xs: 11px  --fs-sm: 13px  --fs-base: 15px
@@ -110,35 +127,49 @@ PARALLAX: Apply to hero background (subtle, max 20px movement)
 ──────────────────────────────────────────────────────────
 INTERACTIVE JAVASCRIPT (ALL REQUIRED)
 ──────────────────────────────────────────────────────────
-• Mobile hamburger menu: smooth slide-down drawer with backdrop
-• Sticky nav: background + blur changes on scroll (threshold 60px)
-• Smooth scroll: all anchor links use scrollIntoView behavior smooth
-• FAQ accordion: height animation (max-height transition), chevron rotate
-• Counter animation: requestAnimationFrame count-up for stats
-• Tab/filter system: if showing projects/services, add working tabs
-• Modal: at least one modal (e.g., contact form, image lightbox)
-• Toast notification: show success toast after form submit
-• Scroll progress bar: thin accent-colored bar at top of page
+- Mobile hamburger menu: smooth slide-down drawer with backdrop
+- Sticky nav: background + blur changes on scroll (threshold 60px)
+- Smooth scroll: all anchor links use scrollIntoView behavior smooth
+- FAQ accordion: height animation (max-height transition), chevron rotate
+- Counter animation: requestAnimationFrame count-up for stats
+- Tab/filter system: if showing projects/services, add working tabs
+- Modal: at least one modal (e.g., contact form, image lightbox)
+- Toast notification: show success toast after form submit
+- Scroll progress bar: thin accent-colored bar at top of page
 
 ──────────────────────────────────────────────────────────
 IMAGES (working URLs only)
 ──────────────────────────────────────────────────────────
-• Unsplash: https://images.unsplash.com/photo-[ID]?w=800&q=80
+- Unsplash: https://images.unsplash.com/photo-[ID]?w=800&q=80
   Use real photo IDs matching the content (search mentally for best fit)
-• Avatars: https://i.pravatar.cc/150?img=N  (N = 1–70, vary all)
-• Logos/icons: hand-crafted inline SVG (no external icon libs)
-• ALL img tags need loading="lazy" and alt attributes
+- Avatars: https://i.pravatar.cc/150?img=N  (N = 1–70, vary all)
+- Logos/icons: hand-crafted inline SVG (no external icon libs)
+- ALL img tags need loading="lazy" and alt attributes
 
 ──────────────────────────────────────────────────────────
 CONTENT — REAL, COMPELLING COPY ONLY
 ──────────────────────────────────────────────────────────
-• ZERO Lorem Ipsum — anywhere, ever
-• Headlines: benefit-driven, specific, emotional
-• Body copy: clear, confident, human — like a great copywriter wrote it
-• Testimonials: realistic names, companies, photos, specific quotes
-• Stats/numbers: believable and relevant (e.g., "2,847 clients" not "1000+")
-• CTAs: action-oriented with value ("Start Your Free Trial", "See It Live")
-• Microcopy: "No credit card · Cancel anytime · Setup in 2 minutes"
+- ZERO Lorem Ipsum — anywhere, ever
+- Headlines: benefit-driven, specific, emotional
+- Body copy: clear, confident, human — like a great copywriter wrote it
+- Testimonials: realistic names, companies, photos, specific quotes
+- Stats/numbers: believable and relevant (e.g., "2,847 clients" not "1000+")
+- CTAs: action-oriented with value ("Start Your Free Trial", "See It Live")
+- Microcopy: "No credit card · Cancel anytime · Setup in 2 minutes"
+
+──────────────────────────────────────────────────────────
+RTL / ARABIC LAYOUT REQUIREMENTS (Arabic prompts only)
+──────────────────────────────────────────────────────────
+${lang === "ar"
+  ? `• html element: <html lang="ar" dir="rtl">
+- All flex rows: flex-direction default is correct but check alignment
+- text-align: right for all body content
+- Padding/margin mirrors: use padding-right where LTR uses padding-left
+- nav, header, footer: all items right-aligned or space-between with RTL logic
+- No hardcoded LTR assumptions in JS (e.g. scroll direction)
+- Arabic numerals (٠١٢٣) optional but preferred for stats`
+  : `• Standard LTR layout applies throughout`
+}
 
 ──────────────────────────────────────────────────────────
 RESPONSIVE — MOBILE FIRST
@@ -149,19 +180,19 @@ Breakpoints:
   @media (max-width: 1024px) — small desktop
 
 Requirements:
-• Navigation collapses to hamburger at ≤768px
-• Grid layouts go single-column at ≤480px
-• Hero font sizes scale down proportionally
-• Touch-friendly tap targets (min 44px)
-• No horizontal scroll on any screen size
+- Navigation collapses to hamburger at ≤768px
+- Grid layouts go single-column at ≤480px
+- Hero font sizes scale down proportionally
+- Touch-friendly tap targets (min 44px)
+- No horizontal scroll on any screen size
 
 ──────────────────────────────────────────────────────────
 ACCESSIBILITY
 ──────────────────────────────────────────────────────────
-• Semantic HTML: <header>, <nav>, <main>, <section>, <article>, <footer>
-• ARIA attributes on interactive elements
-• Focus styles visible and styled (not default outline)
-• Color contrast ≥ 4.5:1 for body text
+- Semantic HTML: <header>, <nav>, <main>, <section>, <article>, <footer>
+- ARIA attributes on interactive elements
+- Focus styles visible and styled (not default outline)
+- Color contrast ≥ 4.5:1 for body text
 
 ──────────────────────────────────────────────────────────
 SIZE REQUIREMENT — CRITICAL
@@ -335,11 +366,11 @@ You MUST include ALL of these sections fully written. No placeholders.
     • Logo + copyright + 4–5 links + social icons
 
 CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
-• Loss aversion: "Don't miss out on..."
-• Social proof: numbers, logos, testimonials everywhere
-• Authority: media mentions, certifications, stats
-• Clarity: one goal per section, no decision paralysis
-• Urgency: "Limited spots" or "Prices go up soon" where appropriate
+- Loss aversion: "Don't miss out on..."
+- Social proof: numbers, logos, testimonials everywhere
+- Authority: media mentions, certifications, stats
+- Clarity: one goal per section, no decision paralysis
+- Urgency: "Limited spots" or "Prices go up soon" where appropriate
 `;
 
     const systemPrompts = {
@@ -349,9 +380,8 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
 
     const systemPrompt = systemPrompts[type] || systemPrompts.website;
 
-    // ── تغيير 2: Groq API CALL ────────────────────────────────────────────────
+    // ── Groq API Call ─────────────────────────────────────────────────────────
     async function callGroqApi(systemP, userP, attempt = 1) {
-      // ── تغيير 3: endpoint Groq ─────────────────────────────────────────────
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -359,11 +389,6 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
           "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          // ── تغيير 4: موديل Groq المجاني ───────────────────────────────────
-          // خيارات مجانية قوية:
-          // "llama-3.3-70b-versatile"  → جودة عالية (1000 طلب/يوم)
-          // "llama-3.1-8b-instant"     → سريع جداً (14400 طلب/يوم)
-          // "meta-llama/llama-4-scout-17b-16e-instruct" → الأحدث
           model: "llama-3.3-70b-versatile",
           max_tokens: 8192,
           temperature: attempt === 1 ? 0.6 : 0.7,
@@ -376,20 +401,20 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `Groq API error: ${res.status}`);
+        // Never expose raw API errors to the client
+        throw new Error("INTERNAL_GROQ_ERROR");
       }
 
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content;
-      if (!content) throw new Error("Empty response received from Groq. Please try again.");
+      if (!content) throw new Error("INTERNAL_EMPTY_RESPONSE");
 
       return {
         content,
         usage: {
           prompt_tokens: data.usage?.prompt_tokens ?? 0,
           completion_tokens: data.usage?.completion_tokens ?? 0,
-        }
+        },
       };
     }
 
@@ -405,11 +430,11 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
 
     function validateOutput(html) {
       const errors = [];
-      if (!html.includes("<style")) errors.push("missing <style>");
-      if (!html.includes("<script")) errors.push("missing <script>");
-      if (!html.includes("</html>")) errors.push("HTML not closed");
+      if (!html.includes("<style")) errors.push("missing_style");
+      if (!html.includes("<script")) errors.push("missing_script");
+      if (!html.includes("</html>")) errors.push("html_not_closed");
       const lineCount = html.split("\n").length;
-      if (lineCount < 500) errors.push(`output too short: ${lineCount} lines (minimum 500)`);
+      if (lineCount < 500) errors.push(`too_short:${lineCount}`);
       return errors;
     }
 
@@ -420,11 +445,12 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const lineCount = html ? html.split("\n").length : 0;
-        const userPrompt = attempt === 1
-          ? `Build this at maximum quality — write at least 500 lines of HTML code, fully fleshed out with real content. Make it astonish anyone who sees it: ${prompt.trim()}`
-          : `Build this again (attempt ${attempt}). IMPORTANT: Your previous output was too short (${lineCount} lines). You MUST write at least 500 lines of complete, detailed HTML. Be SIGNIFICANTLY more detailed, add more sections, more content, more animations. Push quality and size to the absolute limit: ${prompt.trim()}`;
 
-        // ── تغيير 5: استدعاء Groq ────────────────────────────────────────────
+        const userPrompt =
+          attempt === 1
+            ? `Build this at maximum quality — write at least 500 lines of HTML code, fully fleshed out with real content. Make it astonish anyone who sees it: ${prompt.trim()}`
+            : `Build this again (attempt ${attempt}). IMPORTANT: Your previous output was too short (${lineCount} lines). You MUST write at least 500 lines of complete, detailed HTML. Be SIGNIFICANTLY more detailed, add more sections, more content, more animations. Push quality and size to the absolute limit: ${prompt.trim()}`;
+
         const result = await callGroqApi(systemPrompt, userPrompt, attempt);
         const candidate = cleanHtml(result.content);
         usage = result.usage;
@@ -439,17 +465,14 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
         if (attempt === 3) {
           html = candidate;
         }
-
       } catch (err) {
         lastError = err;
         if (attempt === 3) throw err;
-        await new Promise(r => setTimeout(r, 1000 * attempt));
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
       }
     }
 
     if (!html && lastError) throw lastError;
-
-    const lineCount = html.split("\n").length;
 
     return Response.json({
       html,
@@ -458,28 +481,18 @@ CONVERSION PSYCHOLOGY APPLIED THROUGHOUT:
         output_tokens: usage?.completion_tokens ?? 0,
       },
       meta: {
-        lines: lineCount,
-        // ── تغيير 6: تحديث الـ provider ─────────────────────────────────────
+        lines: html.split("\n").length,
         provider: "groq",
         model: "llama-3.3-70b-versatile",
-      }
+        lang,
+      },
     });
 
-  } catch (error) {
-    const message = error.message || "Generation failed. Please try again.";
-
-    const safeMessage = (
-      message.toLowerCase().includes("groq") ||
-      message.toLowerCase().includes("api key") ||
-      message.toLowerCase().includes("bearer") ||
-      message.toLowerCase().includes("unauthorized") ||
-      message.toLowerCase().includes("401") ||
-      message.toLowerCase().includes("403") ||
-      message.toLowerCase().includes("429")
-    )
-      ? "Generation failed. Please try again."
-      : message;
-
-    return Response.json({ error: safeMessage }, { status: 500 });
+  } catch {
+    // All errors — internal or external — return a clean generic message
+    return Response.json(
+      { error: "Something went wrong. Please try again." },
+      { status: 500 }
+    );
   }
 }
